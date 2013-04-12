@@ -5,5 +5,9 @@
 	<classpathentry kind="lib" path="lib/java-cup.jar"/>
 	<classpathentry kind="lib" path="lib/JFlex.jar"/>
 	<classpathentry kind="lib" path="lib/junit.jar"/>
+	<classpathentry kind="lib" path="lib/xstream-1.4.4.jar"/>
+	<classpathentry kind="lib" path="lib/httpclient-4.2.2.jar"/>
+	<classpathentry kind="lib" path="lib/httpcore-4.2.2.jar"/>
+	<classpathentry kind="lib" path="lib/commons-logging-1.1.1.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
