@@ -5,6 +5,9 @@ import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.File;
+import java.io.IOException;
+import java.security.NoSuchAlgorithmException;
 import java.util.Observable;
 import java.util.Observer;
 
@@ -15,13 +18,25 @@ import javax.swing.JComponent;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.ScrollPaneConstants;
+import javax.swing.text.JTextComponent;
 
+import com.thoughtworks.xstream.XStream;
+
+import openml.algorithms.Conversion;
+import openml.algorithms.Hashing;
+import openml.constants.Constants;
+import openml.io.ApiConnector;
 import openml.io.ApiSessionHash;
+import openml.xml.ApiError;
+import openml.xml.DataSetDescription;
+import openml.xml.UploadDataSet;
+import openml.xstream.XstreamXmlMapping;
 
 import weka.core.Instances;
 
@@ -31,6 +46,8 @@ public class RegisterDatasetDialog extends JDialog implements Observer {
 	private final Instances dataset;
 	private final ApiSessionHash apiSessionHash;
 	private final JFrame parent;
+	
+	private boolean requestedSubmission;
 
 	private static final JLabel[] label = { new JLabel("Name: "),
 			new JLabel("Version: "), new JLabel("Description: "),
@@ -49,25 +66,35 @@ public class RegisterDatasetDialog extends JDialog implements Observer {
 			"Optional. Default is none, meanining Public Domain or \"dont know / care\".",
 			"Optional. The attribute that reflects the row id for each row in tabular data. If not set, we will assume that there is no row-id column and that the rows should be ordered in the order they appear in the dataset (from 0 to (n.obs - 1))." };
 
-	private static final JComponent[] textComponent = {
+	private static final JTextComponent[] basicTextComponents = {
 			new JTextField(),
 			new JTextField(),
-			new JScrollPane(new JTextArea(6, 0),
-					ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
-					ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED),
-			new JScrollPane(new JTextArea(3, 0),
-					ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
-					ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED),
-			new JScrollPane(new JTextArea(3, 0),
-					ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
-					ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED), 
+			new JTextArea(6, 0),
+			new JTextArea(3, 0),
+			new JTextArea(3, 0),
 			new JTextField(),
 			new JTextField(), 
 			new JTextField(), 
 			new JTextField() };
 	
+	private static final JComponent[] textComponent = {
+		basicTextComponents[0], 
+		basicTextComponents[1], 
+		new JScrollPane(basicTextComponents[2], ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
+				ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED),
+		new JScrollPane(basicTextComponents[3], ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
+				ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED),
+		new JScrollPane(basicTextComponents[4],ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
+				ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED), 
+				basicTextComponents[5], 
+				basicTextComponents[6], 
+				basicTextComponents[7], 
+				basicTextComponents[8]
+	};
+	
 	public RegisterDatasetDialog(JFrame parent, Instances dataset, ApiSessionHash apiSessionHash ) {
 		super(parent, "Register dataset on OpenML.org");
+		this.requestedSubmission = false;
 		this.dataset = dataset;
 		this.parent = parent;
 		this.apiSessionHash = apiSessionHash;
@@ -96,6 +123,7 @@ public class RegisterDatasetDialog extends JDialog implements Observer {
 		for (int i = 0; i < label.length; ++i) {
 			textComponent[i].setBorder(BorderFactory.createEtchedBorder());
 			textComponent[i].setAlignmentX(JComponent.LEFT_ALIGNMENT);
+			basicTextComponents[i].setText("");
 			label[i].setToolTipText(tooltip[i]);
 			label[i].setAlignmentX(JComponent.LEFT_ALIGNMENT);
 			inputPanel.add(label[i]);
@@ -113,12 +141,14 @@ public class RegisterDatasetDialog extends JDialog implements Observer {
 
 		cancel.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent a) {
+				requestedSubmission = false;
 				dispose();
 			}
 		});
 		
 		submit.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent a) {
+				requestedSubmission = true;
 				registerDataset();
 			}
 		});
@@ -130,7 +160,52 @@ public class RegisterDatasetDialog extends JDialog implements Observer {
 	
 	private void registerDataset() {
 		if( apiSessionHash.isValid() ) {
-			System.out.println("registering dataset");
+			File tmpDatasetFile;
+			File tmpDescriptionFile;
+			try {
+				XStream xstream = XstreamXmlMapping.getInstance();
+				tmpDatasetFile = Conversion.instancesToTempFile(dataset, "weka_tmp_dataset");
+				
+				DataSetDescription dsd = new DataSetDescription(
+						basicTextComponents[0].getText().equals("") ? null : basicTextComponents[0].getText(), 
+						basicTextComponents[1].getText().equals("") ? null : basicTextComponents[1].getText(), 
+						basicTextComponents[2].getText().equals("") ? null : basicTextComponents[2].getText(), 
+						basicTextComponents[3].getText().equals("") ? null : basicTextComponents[3].getText().split("\n"), 
+						basicTextComponents[4].getText().equals("") ? null : basicTextComponents[4].getText().split("\n"), 
+						Constants.DATASET_FORMAT, 
+						basicTextComponents[5].getText().equals("") ? null : basicTextComponents[5].getText(), 
+						basicTextComponents[6].getText().equals("") ? null : basicTextComponents[6].getText(), 
+						basicTextComponents[7].getText().equals("") ? null : basicTextComponents[7].getText(), 
+						basicTextComponents[8].getText().equals("") ? null : basicTextComponents[8].getText(), 
+						Hashing.md5(tmpDatasetFile));
+				
+				tmpDescriptionFile = Conversion.stringToTempFile(xstream.toXML(dsd), "weka_tmp_description");
+				String result = ApiConnector.openmlDataUpload(tmpDescriptionFile, tmpDatasetFile, apiSessionHash.getSessionHash());
+				Object resultObject = xstream.fromXML(result);
+				if(resultObject instanceof ApiError) {
+					ApiError error = (ApiError) resultObject;
+					JOptionPane.showMessageDialog(parent,
+							error.getMessage(),
+						    "Error",
+						    JOptionPane.ERROR_MESSAGE);
+				} else {
+					UploadDataSet uds = (UploadDataSet) resultObject;
+				
+					JOptionPane.showMessageDialog(parent, "Dataset succesfully registered with id " + uds.getId() );
+				}
+			} catch (IOException e) {
+				JOptionPane.showMessageDialog(parent,
+						"An unexpected IO Exception has occured. ",
+					    "Error",
+					    JOptionPane.ERROR_MESSAGE);
+			} catch (NoSuchAlgorithmException e) {
+				JOptionPane.showMessageDialog(parent,
+						"An unexpected Exception has occured. ",
+					    "Error",
+					    JOptionPane.ERROR_MESSAGE);
+			}
+			
+			
 		} else {
 			AuthenticateDialog ad = new AuthenticateDialog(parent, apiSessionHash);
 			ad.setVisible(true);
@@ -138,7 +213,7 @@ public class RegisterDatasetDialog extends JDialog implements Observer {
 	}
 
 	public void update(Observable arg0, Object arg1) {
-		System.out.println("update function invoked");
-		registerDataset();
+		if(requestedSubmission)
+			registerDataset();
 	}
 }

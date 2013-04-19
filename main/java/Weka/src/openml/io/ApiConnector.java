@@ -1,6 +1,7 @@
 package openml.io;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.URL;
@@ -10,6 +11,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import openml.algorithms.Hashing;
+import openml.constants.Settings;
 
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
@@ -17,13 +19,16 @@ import org.apache.http.NameValuePair;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.HttpPost;
+import org.apache.http.entity.mime.MultipartEntity;
+import org.apache.http.entity.mime.content.FileBody;
+import org.apache.http.entity.mime.content.StringBody;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.message.BasicNameValuePair;
 
 import weka.core.Instances;
 
 public class ApiConnector {
-	private static final String API_URL = "http://www.openml.org/api/";
+	private static final String API_URL = Settings.BASE_URL + "api/";
 	
 	private static HttpClient httpclient;
 	
@@ -36,6 +41,14 @@ public class ApiConnector {
 	
 	public static String openmlDataDescription( int did ) throws IOException {
 		return doApiRequest("openml.data.description", "&data_id=" + did );
+	}
+	
+	public static String openmlDataUpload( File description, File dataset, String session_hash ) throws IOException {
+		MultipartEntity params = new MultipartEntity();
+		params.addPart("description", new FileBody(description));
+		params.addPart("dataset", new FileBody(dataset));
+		params.addPart("session_hash",new StringBody(session_hash));
+        return doApiRequest("openml.data.upload", "", params);
 	}
 	
 	public static Instances getDatasetFromUrl( String url ) throws IOException {

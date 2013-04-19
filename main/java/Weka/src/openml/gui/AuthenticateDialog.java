@@ -16,6 +16,7 @@ import javax.swing.JComponent;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JPasswordField;
 import javax.swing.JTextField;
@@ -33,6 +34,7 @@ public class AuthenticateDialog extends JDialog {
 	
 	private static final long serialVersionUID = 1L;
 	private ApiSessionHash sessionHash;
+	private final JFrame parent;
 
 	private static final JLabel[] label = {
 		new JLabel("Username: "), 
@@ -51,8 +53,10 @@ public class AuthenticateDialog extends JDialog {
 	
 	public AuthenticateDialog(JFrame parent, ApiSessionHash sessionHash ) {
 		super(parent, "Authenticate on OpenML.org");
+		this.parent = parent;
 		this.sessionHash = sessionHash;
 		add(getContents());
+		setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
 		setResizable(false);
 		pack();
 	}
@@ -75,6 +79,7 @@ public class AuthenticateDialog extends JDialog {
 		for (int i = 0; i < label.length; ++i) {
 			textComponent[i].setBorder(BorderFactory.createEtchedBorder());
 			textComponent[i].setAlignmentX(JComponent.LEFT_ALIGNMENT);
+			textComponent[i].setText("");
 			label[i].setToolTipText(tooltip[i]);
 			label[i].setAlignmentX(JComponent.LEFT_ALIGNMENT);
 			inputPanel.add(label[i]);
@@ -92,6 +97,7 @@ public class AuthenticateDialog extends JDialog {
 
 		cancel.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent a) {
+				setVisible(false);
 				dispose();
 			}
 		});
@@ -104,22 +110,34 @@ public class AuthenticateDialog extends JDialog {
 					System.out.println(response);
 					Object xml = xstream.fromXML(response);
 					if( xml instanceof ApiError ) {
-						// TODO: present error dialog. 
+						ApiError error = (ApiError) xml;
+						JOptionPane.showMessageDialog(parent,
+								error.getMessage(),
+							    "Error",
+							    JOptionPane.ERROR_MESSAGE);
 					} else {
 						// TODO: set also username. 
 						Authenticate auth = (Authenticate) xml;
 						sessionHash.set(null, auth.getSessionHash(), auth.getValidUntil());
 					}
 				} catch (IOException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
+					JOptionPane.showMessageDialog(parent,
+							"An unexpected IO Exception has occured. ",
+						    "Error",
+						    JOptionPane.ERROR_MESSAGE);
 				} catch (NoSuchAlgorithmException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
+					JOptionPane.showMessageDialog(parent,
+							"An unexpected Exception has occured. ",
+						    "Error",
+						    JOptionPane.ERROR_MESSAGE);
 				} catch (ParseException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
+					JOptionPane.showMessageDialog(parent,
+							"An unexpected Parse Exception has occured. ",
+						    "Error",
+						    JOptionPane.ERROR_MESSAGE);
 				} 
+				
+				setVisible(false);
 				dispose();
 			}
 		});

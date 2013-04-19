@@ -1,6 +1,5 @@
 package openml.xml;
 
-import java.util.ArrayList;
 
 public class DataSetDescription {
 	private final String oml = "http://open-ml.org/openml";
@@ -10,8 +9,8 @@ public class DataSetDescription {
 	private String version;
 	private String description;
 	private String format;
-	private ArrayList<String> creator;
-	private ArrayList<String> contributor;
+	private String[] creator;
+	private String[] contributor;
 	private String collection_date;
 	private String upload_date;
 	private String language;
@@ -27,8 +26,8 @@ public class DataSetDescription {
 			String name, 
 			String version, 
 			String description, 
-			ArrayList<String> creator, 
-			ArrayList<String> contributor, 
+			String[] creator, 
+			String[] contributor, 
 			String format, 
 			String collection_date, 
 			String language, 
@@ -75,11 +74,11 @@ public class DataSetDescription {
 		return format;
 	}
 
-	public ArrayList<String> getCreator() {
+	public String[] getCreator() {
 		return creator;
 	}
 
-	public ArrayList<String> getContributor() {
+	public String[] getContributor() {
 		return contributor;
 	}
 
