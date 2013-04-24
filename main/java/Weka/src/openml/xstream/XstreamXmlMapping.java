@@ -3,7 +3,10 @@ package openml.xstream;
 import openml.xml.Authenticate;
 import openml.xml.DataSetDescription;
 import openml.xml.ApiError;
+import openml.xml.Implementation;
+import openml.xml.Task;
 import openml.xml.UploadDataSet;
+import openml.xml.UploadImplementation;
 
 import com.thoughtworks.xstream.XStream;
 import com.thoughtworks.xstream.io.naming.NoNameCoder;
@@ -20,6 +23,7 @@ public class XstreamXmlMapping {
 		
 		xstream.addImplicitCollection(DataSetDescription.class, "creator", "oml:creator", String.class);
 		xstream.addImplicitCollection(DataSetDescription.class, "contributor", "oml:contributor", String.class);
+		
 		xstream.aliasField("oml:id", DataSetDescription.class, "id");
 		xstream.aliasField("oml:name", DataSetDescription.class, "name");
 		xstream.aliasField("oml:version", DataSetDescription.class, "version");
@@ -37,6 +41,27 @@ public class XstreamXmlMapping {
 		xstream.alias("oml:upload_data_set", UploadDataSet.class);
 		xstream.aliasField("oml:id", UploadDataSet.class, "id");
 		
+		// implementation 
+		xstream.alias("oml:implementation", Implementation.class);
+		xstream.aliasAttribute(Implementation.class, "oml", "xmlns:oml");
+		
+		xstream.addImplicitCollection(Implementation.class, "creator", "oml:creator", String.class);
+		xstream.addImplicitCollection(Implementation.class, "contributor", "oml:contributor", String.class);
+		
+		xstream.aliasField("oml:fullName", Implementation.class, "fullName");
+		xstream.aliasField("oml:name", Implementation.class, "name");
+		xstream.aliasField("oml:version", Implementation.class, "version");
+		xstream.aliasField("oml:description", Implementation.class, "description");
+		xstream.aliasField("oml:licence", Implementation.class, "licence");
+		xstream.aliasField("oml:language", Implementation.class, "language");
+		xstream.aliasField("oml:full_description", Implementation.class, "full_description");
+		xstream.aliasField("oml:installation_notes", Implementation.class, "installation_notes");
+		xstream.aliasField("oml:dependencies", Implementation.class, "dependencies");
+		
+		// upload implementation
+		xstream.alias("oml:upload_implementation", UploadImplementation.class);
+		xstream.aliasField("oml:id", UploadImplementation.class, "id");
+		
 		// generic error
 		xstream.alias("oml:error", ApiError.class);
 		xstream.aliasAttribute(ApiError.class, "oml", "xmlns:oml");
@@ -48,6 +73,37 @@ public class XstreamXmlMapping {
 		xstream.alias("oml:authenticate", Authenticate.class);
 		xstream.aliasField("oml:session_hash", Authenticate.class, "sessionHash");
 		xstream.aliasField("oml:valid_until", Authenticate.class, "validUntil");
+		
+		// tasks
+		xstream.alias("oml:task", Task.class);
+		xstream.alias("oml:input", Task.Input.class);
+		xstream.alias("oml:data_set", Task.Input.Data_set.class);
+		xstream.alias("oml:estimation_procedure", Task.Input.Estimation_procedure.class);
+		xstream.alias("oml:parameter", Task.Input.Estimation_procedure.Parameter.class);
+		xstream.alias("oml:evaluation_measures", Task.Input.Evaluation_measures.class);
+		xstream.alias("oml:output", Task.Output.class);
+		xstream.alias("oml:predictions", Task.Output.Predictions.class);
+		xstream.alias("oml:feature", Task.Output.Predictions.Feature.class);
+		xstream.aliasAttribute(Task.class, "oml", "xmlns:oml");
+		
+		xstream.addImplicitCollection(Task.class, "inputs", "oml:input", Task.Input.class);
+		xstream.addImplicitCollection(Task.class, "outputs", "oml:output", Task.Output.class);
+		xstream.addImplicitCollection(Task.Input.Estimation_procedure.class, "parameters", "oml:parameter", Task.Input.Estimation_procedure.Parameter.class);
+		xstream.addImplicitCollection(Task.Input.Evaluation_measures.class, "evaluation_measure", "oml:evaluation_measure", String.class);
+		xstream.addImplicitCollection(Task.Output.Predictions.class, "features", "oml:feature", Task.Output.Predictions.Feature.class);
+		
+		xstream.aliasField("oml:task_id", Task.class, "task_id");
+		xstream.aliasField("oml:task_type", Task.class, "task_type");
+		xstream.aliasField("oml:data_set_id", Task.Input.Data_set.class, "data_set_id");
+		xstream.aliasField("oml:target_feature", Task.Input.Data_set.class, "target_feature");
+		xstream.aliasField("oml:data_set", Task.Input.class, "data_set");
+		xstream.aliasField("oml:type", Task.Input.Estimation_procedure.class, "type");
+		xstream.aliasField("oml:data_splits_url", Task.Input.Estimation_procedure.class, "data_splits_url");
+		xstream.aliasField("oml:estimation_procedure", Task.Input.class, "estimation_procedure");
+		xstream.aliasField("oml:evaluation_measure", Task.Input.Evaluation_measures.class, "evaluation_measure");
+		xstream.aliasField("oml:evaluation_measures", Task.Input.class, "evaluation_measures");
+		xstream.aliasField("oml:predictions", Task.Output.class, "predictions");
+		xstream.aliasField("oml:format", Task.Output.Predictions.class, "format");
 		
 		return xstream;
 	}
