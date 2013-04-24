@@ -43,12 +43,27 @@ public class ApiConnector {
 		return doApiRequest("openml.data.description", "&data_id=" + did );
 	}
 	
+	public static String openmlTasksSearch( int task_id ) throws IOException {
+		return doApiRequest("openml.tasks.search", "&task_id=" + task_id );
+	}
+	
 	public static String openmlDataUpload( File description, File dataset, String session_hash ) throws IOException {
 		MultipartEntity params = new MultipartEntity();
 		params.addPart("description", new FileBody(description));
 		params.addPart("dataset", new FileBody(dataset));
 		params.addPart("session_hash",new StringBody(session_hash));
         return doApiRequest("openml.data.upload", "", params);
+	}
+	
+	public static String openmlImplementationUpload( File description, File binary, File source, String session_hash ) throws IOException {
+		MultipartEntity params = new MultipartEntity();
+		params.addPart("description", new FileBody(description));
+		if(source != null)
+			params.addPart("source", new FileBody(source));
+		if(binary != null)
+			params.addPart("binary", new FileBody(binary));
+		params.addPart("session_hash",new StringBody(session_hash));
+        return doApiRequest("openml.implementation.upload", "", params);
 	}
 	
 	public static Instances getDatasetFromUrl( String url ) throws IOException {

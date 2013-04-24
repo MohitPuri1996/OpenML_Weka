@@ -148,7 +148,6 @@ public class RegisterDatasetDialog extends JDialog implements Observer {
 		
 		submit.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent a) {
-				requestedSubmission = true;
 				registerDataset();
 			}
 		});
@@ -160,6 +159,7 @@ public class RegisterDatasetDialog extends JDialog implements Observer {
 	
 	private void registerDataset() {
 		if( apiSessionHash.isValid() ) {
+			requestedSubmission = false;
 			File tmpDatasetFile;
 			File tmpDescriptionFile;
 			try {
@@ -167,17 +167,17 @@ public class RegisterDatasetDialog extends JDialog implements Observer {
 				tmpDatasetFile = Conversion.instancesToTempFile(dataset, "weka_tmp_dataset");
 				
 				DataSetDescription dsd = new DataSetDescription(
-						basicTextComponents[0].getText().equals("") ? null : basicTextComponents[0].getText(), 
-						basicTextComponents[1].getText().equals("") ? null : basicTextComponents[1].getText(), 
-						basicTextComponents[2].getText().equals("") ? null : basicTextComponents[2].getText(), 
-						basicTextComponents[3].getText().equals("") ? null : basicTextComponents[3].getText().split("\n"), 
-						basicTextComponents[4].getText().equals("") ? null : basicTextComponents[4].getText().split("\n"), 
-						Constants.DATASET_FORMAT, 
-						basicTextComponents[5].getText().equals("") ? null : basicTextComponents[5].getText(), 
-						basicTextComponents[6].getText().equals("") ? null : basicTextComponents[6].getText(), 
-						basicTextComponents[7].getText().equals("") ? null : basicTextComponents[7].getText(), 
-						basicTextComponents[8].getText().equals("") ? null : basicTextComponents[8].getText(), 
-						Hashing.md5(tmpDatasetFile));
+					basicTextComponents[0].getText().equals("") ? null : basicTextComponents[0].getText(), 
+					basicTextComponents[1].getText().equals("") ? null : basicTextComponents[1].getText(), 
+					basicTextComponents[2].getText().equals("") ? null : basicTextComponents[2].getText(), 
+					basicTextComponents[3].getText().equals("") ? null : basicTextComponents[3].getText().split("\n"), 
+					basicTextComponents[4].getText().equals("") ? null : basicTextComponents[4].getText().split("\n"), 
+					Constants.DATASET_FORMAT, 
+					basicTextComponents[5].getText().equals("") ? null : basicTextComponents[5].getText(), 
+					basicTextComponents[6].getText().equals("") ? null : basicTextComponents[6].getText(), 
+					basicTextComponents[7].getText().equals("") ? null : basicTextComponents[7].getText(), 
+					basicTextComponents[8].getText().equals("") ? null : basicTextComponents[8].getText(), 
+					Hashing.md5(tmpDatasetFile));
 				
 				tmpDescriptionFile = Conversion.stringToTempFile(xstream.toXML(dsd), "weka_tmp_description");
 				String result = ApiConnector.openmlDataUpload(tmpDescriptionFile, tmpDatasetFile, apiSessionHash.getSessionHash());
@@ -207,6 +207,7 @@ public class RegisterDatasetDialog extends JDialog implements Observer {
 			
 			
 		} else {
+			requestedSubmission = true;
 			AuthenticateDialog ad = new AuthenticateDialog(parent, apiSessionHash);
 			ad.setVisible(true);
 		}

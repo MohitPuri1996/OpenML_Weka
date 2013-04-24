@@ -73,6 +73,10 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.filechooser.FileFilter;
 
+import openml.experiment.TaskBasedExperiment;
+import openml.experiment.TaskResultProducer;
+import openml.gui.TaskListPanel;
+
 /** 
  * This panel controls the configuration of an experiment.
   * <p>
@@ -91,7 +95,7 @@ public class SimpleSetupPanel
   private static final long serialVersionUID = 5257424515609176509L;
 
   /** The experiment being configured */
-  protected Experiment m_Exp;
+  protected TaskBasedExperiment m_Exp;
 
   /** The panel which switched between simple and advanced setup modes */
   protected SetupModePanel m_modePanel = null;
@@ -201,9 +205,10 @@ public class SimpleSetupPanel
   protected static String TYPE_CROSSVALIDATION_TEXT = (Messages.getInstance().getString("SimpleSetupPanel_TYPE_CROSSVALIDATION_TEXT_Text"));
   protected static String TYPE_RANDOMSPLIT_TEXT = (Messages.getInstance().getString("SimpleSetupPanel_TYPE_RANDOMSPLIT_TEXT_Text"));
   protected static String TYPE_FIXEDSPLIT_TEXT = (Messages.getInstance().getString("SimpleSetupPanel_TYPE_FIXEDSPLIT_TEXT_Text"));
+  protected static String TYPE_OPENML_TASK_TEXT = "OpenML Task";
 
   /** The panel for configuring selected datasets */
-  protected DatasetListPanel m_DatasetListPanel = new DatasetListPanel();
+  protected TaskListPanel m_TaskListPanel = new TaskListPanel();
 
   /** The panel for configuring selected algorithms */
   protected AlgorithmListPanel m_AlgorithmListPanel = new AlgorithmListPanel();
@@ -487,6 +492,7 @@ public class SimpleSetupPanel
     m_ExperimentTypeCBox.addItem(TYPE_CROSSVALIDATION_TEXT);
     m_ExperimentTypeCBox.addItem(TYPE_RANDOMSPLIT_TEXT);
     m_ExperimentTypeCBox.addItem(TYPE_FIXEDSPLIT_TEXT);
+    m_ExperimentTypeCBox.addItem(TYPE_OPENML_TASK_TEXT);
 
     m_ExperimentTypeCBox.addActionListener(new ActionListener() {
 	public void actionPerformed(ActionEvent e) {
@@ -553,7 +559,7 @@ public class SimpleSetupPanel
 
     JPanel datasets = new JPanel();
     datasets.setLayout(new BorderLayout());
-    datasets.add(m_DatasetListPanel, BorderLayout.CENTER);
+    datasets.add(m_TaskListPanel, BorderLayout.CENTER);
 
     JPanel algorithms = new JPanel();
     algorithms.setLayout(new BorderLayout());
@@ -777,10 +783,10 @@ public class SimpleSetupPanel
       }
     }
 
-    m_DatasetListPanel.setExperiment(exp);
+    m_TaskListPanel.setExperiment(exp);
     m_AlgorithmListPanel.setExperiment(exp);
     
-    m_Exp = exp;
+    m_Exp = new TaskBasedExperiment(exp);
     expTypeChanged(); // recreate experiment
     
     m_Support.firePropertyChange("", null, null);
@@ -1033,13 +1039,30 @@ public class SimpleSetupPanel
     if (m_ExperimentTypeCBox.getSelectedItem() == TYPE_CROSSVALIDATION_TEXT) {
       m_ExperimentParameterLabel.setText(Messages.getInstance().getString("SimpleSetupPanel_ExpTypeChanged_TYPE_CROSSVALIDATION_TEXT_ExperimentParameterLabel_Text_First"));
       m_ExperimentParameterTField.setText("" + m_numFolds);
-    } else {
+    } else if(m_ExperimentTypeCBox.getSelectedItem() == TYPE_OPENML_TASK_TEXT) { 
+      // nothing. yet
+  	} else {
       m_ExperimentParameterLabel.setText(Messages.getInstance().getString("SimpleSetupPanel_ExpTypeChanged_TYPE_CROSSVALIDATION_TEXT_ExperimentParameterLabel_Text_Second"));
       m_ExperimentParameterTField.setText("" + m_trainPercent);
     }
+    
+    if(m_ExperimentTypeCBox.getSelectedItem() == TYPE_OPENML_TASK_TEXT) { 
+      m_ExpClassificationRBut.setEnabled(false);
+      m_ExpRegressionRBut.setEnabled(false);
+      m_TaskListPanel.setMode(false);
+
+      m_ExperimentParameterTField.setEnabled(false);
+      m_Exp.setMode(false);
+    } else {
+      m_ExpClassificationRBut.setEnabled(true);
+      m_ExpRegressionRBut.setEnabled(true);
+      m_TaskListPanel.setMode(true);
+      m_ExperimentParameterTField.setEnabled(true);
+      m_Exp.setMode(true);
+    }
 
     // update iteration ui
-    if (m_ExperimentTypeCBox.getSelectedItem() == TYPE_FIXEDSPLIT_TEXT) {
+    if (m_ExperimentTypeCBox.getSelectedItem() == TYPE_FIXEDSPLIT_TEXT || m_ExperimentTypeCBox.getSelectedItem() == TYPE_OPENML_TASK_TEXT) {
       m_NumberOfRepetitionsTField.setEnabled(false);
       m_NumberOfRepetitionsTField.setText("1");
       m_Exp.setRunLower(1);
@@ -1081,7 +1104,23 @@ public class SimpleSetupPanel
       
       m_Exp.setResultProducer(cvrp);
       m_Exp.setPropertyPath(propertyPath);
-
+    } else if(m_ExperimentTypeCBox.getSelectedItem() == TYPE_OPENML_TASK_TEXT) {
+      TaskResultProducer trp = new TaskResultProducer();
+      
+      PropertyNode[] propertyPath = new PropertyNode[2];
+      try {
+	propertyPath[0] = new PropertyNode(se, new PropertyDescriptor("splitEvaluator",
+								      CrossValidationResultProducer.class),
+					   CrossValidationResultProducer.class);
+	propertyPath[1] = new PropertyNode(sec, new PropertyDescriptor("classifier",
+								       se.getClass()),
+					   se.getClass());
+      } catch (IntrospectionException e) {
+	e.printStackTrace();
+      }
+      
+      m_Exp.setResultProducer(trp);
+      m_Exp.setPropertyPath(propertyPath);
     } else {
       RandomSplitResultProducer rsrp = new RandomSplitResultProducer();
       rsrp.setRandomizeData(m_ExperimentTypeCBox.getSelectedItem() == TYPE_RANDOMSPLIT_TEXT);

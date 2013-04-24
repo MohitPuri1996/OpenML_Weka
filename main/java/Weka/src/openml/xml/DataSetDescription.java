@@ -1,8 +1,10 @@
 package openml.xml;
 
+import openml.constants.Constants;
+
 
 public class DataSetDescription {
-	private final String oml = "http://open-ml.org/openml";
+	private final String oml = Constants.OPENML_XMLNS;
 	
 	private Integer id;
 	private String name;

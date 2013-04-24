@@ -28,4 +28,13 @@ public class Conversion {
 		file.deleteOnExit();
 		return file;
 	}
+	
+	public static int[] commaSeperatedStringToIntArray( String commaSeperated ) throws NumberFormatException {
+		String[] splitted = commaSeperated.replaceAll("\\s","").split(","); // remove spaces, split on comma
+		int[] result = new int[splitted.length];
+		for(int i = 0; i < result.length; ++i) {
+			result[i] = Integer.parseInt(splitted[i]);
+		}
+		return result;
+	}
 }

@@ -107,7 +107,7 @@ public class AuthenticateDialog extends JDialog {
 				try {
 					XStream xstream = XstreamXmlMapping.getInstance();
 					String response = ApiConnector.openmlAuthenticate(textComponent[0].getText(),textComponent[1].getText());
-					System.out.println(response);
+					
 					Object xml = xstream.fromXML(response);
 					if( xml instanceof ApiError ) {
 						ApiError error = (ApiError) xml;

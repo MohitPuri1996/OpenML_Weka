@@ -1,6 +1,9 @@
 package openml.xml;
 
+import openml.constants.Constants;
+
 public class Implementation {
+	private final String oml = Constants.OPENML_XMLNS;
 	
 	private String name;
 	private String version;
@@ -9,7 +12,7 @@ public class Implementation {
 	private String[] contributor;
 	private String licence;
 	private String language;
-	private String fullDescription;
+	private String full_description;
 	private String installation_notes;
 	private String dependencies;
 	private Bibliographical_reference[] bibliographical_reference;
@@ -25,6 +28,25 @@ public class Implementation {
 		this.description = description;
 	}
 	
+	public Implementation(String name, String version, String description,
+			String[] creator, String[] contributor, String licence,
+			String language, String full_description,
+			String installation_notes, String dependencies) {
+		super();
+		this.name = name;
+		this.version = version;
+		this.description = description;
+		this.creator = creator;
+		this.contributor = contributor;
+		this.licence = licence;
+		this.language = language;
+		this.full_description = full_description;
+		this.installation_notes = installation_notes;
+		this.dependencies = dependencies;
+	}
+
+
+
 	public String getName() {
 		return name;
 	}
@@ -53,8 +75,8 @@ public class Implementation {
 		return language;
 	}
 
-	public String getFullDescription() {
-		return fullDescription;
+	public String getFull_description() {
+		return full_description;
 	}
 
 	public String getInstallation_notes() {
@@ -87,6 +109,10 @@ public class Implementation {
 
 	public String getBinary_md5() {
 		return binary_md5;
+	}
+
+	public String getOml() {
+		return oml;
 	}
 
 	public class Bibliographical_reference {
