@@ -28,13 +28,13 @@ public class TaskListPanel extends DatasetListPanel {
 	private static final long serialVersionUID = 1L;
 
 	/** The experiment to set the dataset or task list of. */
-	protected TaskBasedExperiment m_Exp;
+	protected Experiment m_Exp;
 
 	private boolean datasetBased = true;
 
-	public TaskListPanel(TaskBasedExperiment tbe) {
+	public TaskListPanel(Experiment exp) {
 		this();
-		setExperiment(tbe);
+		setExperiment(exp);
 	}
 
 	public TaskListPanel() {
@@ -65,8 +65,7 @@ public class TaskListPanel extends DatasetListPanel {
 	 *            a value of type 'TaskBasedExperiment'
 	 */
 	public void setExperiment(Experiment exp) {
-		System.out.println("In TaskListPanel::setExperiment");
-		m_Exp = new TaskBasedExperiment(exp);
+		m_Exp = exp;
 		m_List.setModel(datasetBased ? m_Exp.getDatasets() : m_Exp.getTasks());
 		m_AddBut.setEnabled(true);
 		setButtons(null);

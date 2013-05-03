@@ -73,7 +73,6 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.filechooser.FileFilter;
 
-import openml.experiment.TaskBasedExperiment;
 import openml.experiment.TaskResultProducer;
 import openml.gui.TaskListPanel;
 
@@ -95,7 +94,7 @@ public class SimpleSetupPanel
   private static final long serialVersionUID = 5257424515609176509L;
 
   /** The experiment being configured */
-  protected TaskBasedExperiment m_Exp;
+  protected Experiment m_Exp;
 
   /** The panel which switched between simple and advanced setup modes */
   protected SetupModePanel m_modePanel = null;
@@ -786,7 +785,7 @@ public class SimpleSetupPanel
     m_TaskListPanel.setExperiment(exp);
     m_AlgorithmListPanel.setExperiment(exp);
     
-    m_Exp = new TaskBasedExperiment(exp);
+    m_Exp = exp;
     expTypeChanged(); // recreate experiment
     
     m_Support.firePropertyChange("", null, null);

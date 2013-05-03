@@ -2472,6 +2472,21 @@ public class ClassifierPanel extends JPanel implements
 
     if (availablePlugins)
       resultListMenu.add(visPlugins);
+    
+    resultListMenu.addSeparator();
+    
+    JMenuItem exportOpenML = new JMenuItem("Export result to OpenML");
+        if (selectedName != null) {
+        	exportOpenML.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+              System.out.println("Placeholder for function: Export result to OpenML");
+              System.out.println(m_Instances.toString());
+            }
+          });
+        } else {
+        	exportOpenML.setEnabled(false);
+        }
+        resultListMenu.add(exportOpenML);
 
     resultListMenu.show(m_History.getList(), x, y);
   }

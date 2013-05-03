@@ -43,6 +43,7 @@ import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
@@ -52,6 +53,16 @@ import java.util.Enumeration;
 import java.util.Vector;
 
 import javax.swing.DefaultListModel;
+
+import openml.algorithms.InstancesHelper;
+import openml.io.ApiConnector;
+import openml.xml.ApiError;
+import openml.xml.DataSetDescription;
+import openml.xml.Task;
+import openml.xml.Task.Input.Data_set;
+import openml.xstream.XstreamXmlMapping;
+
+import com.thoughtworks.xstream.XStream;
 
 /**
  * Holds all the necessary configuration information for a standard
@@ -196,6 +207,18 @@ public class Experiment
   /** If true an experiment will advance the current data set befor
       any custom itererator */
   protected boolean m_AdvanceDataSetFirst = true;
+  
+  /** An array of the Tasks to be executed */
+  protected DefaultListModel<Integer> m_Tasks = new DefaultListModel<Integer>();
+
+  /**
+   * boolean to specify whether this is a plain dataset based experiment, or
+   * an OpenML specific task based experiment
+   */
+  protected boolean datasetBasedExperiment = true;
+
+  /** The task currently being used */
+  protected Task m_CurrentTask;
 
   /**
    * Sets whether the first attribute is treated as the class
@@ -330,6 +353,8 @@ public class Experiment
   protected transient Instances m_CurrentInstances;
   /** The custom property value that has actually been set */
   protected transient int m_CurrentProperty;
+  /** For xml serialization */
+  private final transient XStream xstream = XstreamXmlMapping.getInstance();
 
   /**
    * When an experiment is running, this returns the current run number.
@@ -359,6 +384,14 @@ public class Experiment
     return m_PropertyNumber;
   }
   
+  public void setMode(boolean datasetBasedExperiment) {
+	this.datasetBasedExperiment = datasetBasedExperiment;
+  }
+
+  public DefaultListModel<Integer> getTasks() {
+	return m_Tasks;
+  }
+  
   /**
    * Prepares an experiment for running, initializing current iterator
    * settings.
@@ -372,6 +405,7 @@ public class Experiment
     m_PropertyNumber = 0;
     m_CurrentProperty = -1;
     m_CurrentInstances = null;
+    m_CurrentTask = null;
     m_Finished = false;
     if (m_UsePropertyIterator && (m_PropertyArray == null)) {
       throw new Exception("Null array for property iterator");
@@ -379,9 +413,12 @@ public class Experiment
     if (getRunLower() > getRunUpper()) {
       throw new Exception("Lower run number is greater than upper run number");
     }
-    if (getDatasets().size() == 0) {
+    if (getDatasets().size() == 0 && datasetBasedExperiment) {
       throw new Exception("No datasets have been specified");
     }
+	if (getTasks().size() == 0 && datasetBasedExperiment == false) {
+		throw new Exception("No tasks have been specified");
+	}
     if (m_ResultProducer == null) {
       throw new Exception("No ResultProducer set");
     }
@@ -519,74 +556,111 @@ public class Experiment
       }
     }
     
-    if (m_CurrentInstances == null) {
-      File currentFile = (File) getDatasets().elementAt(m_DatasetNumber);
-      AbstractFileLoader loader = ConverterUtils.getLoaderForFile(currentFile);
-      loader.setFile(currentFile);
-      Instances data = new Instances(loader.getDataSet());
-      // only set class attribute if not already done by loader
-      if (data.classIndex() == -1) {
-	if (m_ClassFirst) {
-	  data.setClassIndex(0);
-	} else {
-	  data.setClassIndex(data.numAttributes() - 1);
-	}
-      }
-      m_CurrentInstances = data;
-      m_ResultProducer.setInstances(m_CurrentInstances);
-    }
+    if(datasetBasedExperiment)
+      nextIterationDatasetBased();
+    else
+      nextIterationTaskBased();
+    
+    
     
     m_ResultProducer.doRun(m_RunNumber);
 
     advanceCounters();
+  }
+  
+  private void nextIterationDatasetBased() throws IOException {
+	  if (m_CurrentInstances == null) {
+		  File currentFile = (File) getDatasets().elementAt(m_DatasetNumber);
+		  AbstractFileLoader loader = ConverterUtils.getLoaderForFile(currentFile);
+		  loader.setFile(currentFile);
+		  Instances data = new Instances(loader.getDataSet());
+		  // only set class attribute if not already done by loader
+		  if (data.classIndex() == -1) {
+			  if (m_ClassFirst) {
+				  data.setClassIndex(0);
+			  } else {
+				  data.setClassIndex(data.numAttributes() - 1);
+			  }
+		  }
+		  m_CurrentInstances = data;
+		  m_ResultProducer.setInstances(m_CurrentInstances);
+	  }
+  }
+  
+  private void nextIterationTaskBased() throws Exception {
+	  if(m_CurrentTask == null) {
+			Object objTask = xstream.fromXML( ApiConnector.openmlTasksSearch( getTasks().elementAt(m_DatasetNumber) ) );
+			if(objTask instanceof ApiError) {
+				throw new Exception("An error has occured while getting task " + getTasks().elementAt(m_DatasetNumber) );
+			}
+			m_CurrentTask = (Task) objTask;
+			
+			Data_set ds = m_CurrentTask.getInputs()[0].getData_set();
+			Object objDsd = xstream.fromXML( ApiConnector.openmlDataDescription(ds.getData_set_id()) );
+			
+			if(objDsd instanceof ApiError) {
+				throw new Exception("An error has occured while getting data set description " + ds.getData_set_id() );
+			}
+			DataSetDescription dsd = (DataSetDescription) objDsd;
+			Instances instDataset = ApiConnector.getDatasetFromUrl(dsd.getUrl());
+			InstancesHelper.setTargetAttribute(instDataset, ds.getTarget_feature());
+			
+			m_ResultProducer.setInstances(instDataset);
+		}
   }
 
   /**
    * Increments iteration counters appropriately.
    */
   public void advanceCounters() {
+		Integer subjectsInExperiment = (datasetBasedExperiment) ? getDatasets()
+				.size() : getTasks().size();
 
-    if (m_AdvanceDataSetFirst) {
-      m_RunNumber ++;
-      if (m_RunNumber > getRunUpper()) {
-	m_RunNumber = getRunLower();
-	m_DatasetNumber ++;
-	m_CurrentInstances = null;
-	if (m_DatasetNumber >= getDatasets().size()) {
-	  m_DatasetNumber = 0;
-	  if (m_UsePropertyIterator) {
-	    m_PropertyNumber ++;
-	    if (m_PropertyNumber >= Array.getLength(m_PropertyArray)) {
-	      m_Finished = true;
-	    }
-	  } else {
-	    m_Finished = true;
-	  }
-	}
-      }
-    } else { // advance by custom iterator before data set
-      m_RunNumber ++;
-      if (m_RunNumber > getRunUpper()) {
-	m_RunNumber = getRunLower();
-	if (m_UsePropertyIterator) {
-	  m_PropertyNumber ++;
-	  if (m_PropertyNumber >= Array.getLength(m_PropertyArray)) {
-	    m_PropertyNumber = 0;
-	    m_DatasetNumber ++;
-	    m_CurrentInstances = null;
-	    if (m_DatasetNumber >= getDatasets().size()) {
-	      m_Finished = true;
-	    } 
-	  }
-	} else {
-	  m_DatasetNumber ++;
-	  m_CurrentInstances = null;
-	  if (m_DatasetNumber >= getDatasets().size()) {
-	    m_Finished = true;
-	  }
-	}
-      }
-    }
+		if (m_AdvanceDataSetFirst) {
+			m_RunNumber++;
+			if (m_RunNumber > getRunUpper()) {
+				m_RunNumber = getRunLower();
+				m_DatasetNumber++;
+				m_CurrentInstances = null;
+				m_CurrentTask = null;
+				if (m_DatasetNumber >= subjectsInExperiment) {
+					m_DatasetNumber = 0;
+					if (m_UsePropertyIterator) {
+						m_PropertyNumber++;
+						if (m_PropertyNumber >= Array
+								.getLength(m_PropertyArray)) {
+							m_Finished = true;
+						}
+					} else {
+						m_Finished = true;
+					}
+				}
+			}
+		} else { // advance by custom iterator before data set
+			m_RunNumber++;
+			if (m_RunNumber > getRunUpper()) {
+				m_RunNumber = getRunLower();
+				if (m_UsePropertyIterator) {
+					m_PropertyNumber++;
+					if (m_PropertyNumber >= Array.getLength(m_PropertyArray)) {
+						m_PropertyNumber = 0;
+						m_DatasetNumber++;
+						m_CurrentInstances = null;
+						m_CurrentTask = null;
+						if (m_DatasetNumber >= subjectsInExperiment) {
+							m_Finished = true;
+						}
+					}
+				} else {
+					m_DatasetNumber++;
+					m_CurrentInstances = null;
+					m_CurrentTask = null;
+					if (m_DatasetNumber >= subjectsInExperiment) {
+						m_Finished = true;
+					}
+				}
+			}
+		}
   }
 
   /**
