@@ -353,8 +353,6 @@ public class Experiment
   protected transient Instances m_CurrentInstances;
   /** The custom property value that has actually been set */
   protected transient int m_CurrentProperty;
-  /** For xml serialization */
-  private final transient XStream xstream = XstreamXmlMapping.getInstance();
 
   /**
    * When an experiment is running, this returns the current run number.
@@ -386,6 +384,10 @@ public class Experiment
   
   public void setMode(boolean datasetBasedExperiment) {
 	this.datasetBasedExperiment = datasetBasedExperiment;
+  }
+  
+  public boolean getMode() {
+	  return datasetBasedExperiment;
   }
 
   public DefaultListModel<Integer> getTasks() {
@@ -589,6 +591,7 @@ public class Experiment
   
   private void nextIterationTaskBased() throws Exception {
 	  if(m_CurrentTask == null) {
+		    XStream xstream = XstreamXmlMapping.getInstance();
 			Object objTask = xstream.fromXML( ApiConnector.openmlTasksSearch( getTasks().elementAt(m_DatasetNumber) ) );
 			if(objTask instanceof ApiError) {
 				throw new Exception("An error has occured while getting task " + getTasks().elementAt(m_DatasetNumber) );

@@ -1,16 +1,18 @@
 package openml.experiment;
 
-import java.util.Random;
+import openml.xml.Task;
 
 import weka.core.Instances;
-import weka.core.Utils;
 import weka.experiment.CrossValidationResultProducer;
 import weka.experiment.OutputZipper;
 
 public class TaskResultProducer extends CrossValidationResultProducer {
 
 	private static final long serialVersionUID = 1L;
-
+	
+	/** The task to be run */
+	protected Task m_Task;
+	
 	@Override
 	public void doRun(int run) throws Exception {
 		System.out.println("TaskResultProducer run #" + run );
@@ -23,14 +25,14 @@ public class TaskResultProducer extends CrossValidationResultProducer {
 		if (m_Instances == null) {
 			throw new Exception("No Instances set");
 		}
+		
+		if(m_Task == null) {
+			throw new Exception("No task set");
+		}
 		// Randomize on a copy of the original dataset
 		Instances runInstances = new Instances(m_Instances);
-		Random random = new Random(run);
-		runInstances.randomize(random);
-		if (runInstances.classAttribute().isNominal()) {
-			runInstances.stratify(m_NumFolds);
-		}
-		for (int fold = 0; fold < m_NumFolds; fold++) {
+		
+		/*for (int fold = 0; fold < m_NumFolds; fold++) {
 			// Add in some fields to the key like run and fold number, dataset
 			// name
 			Object[] seKey = m_SplitEvaluator.getKey();
@@ -56,6 +58,6 @@ public class TaskResultProducer extends CrossValidationResultProducer {
 					throw ex;
 				}
 			}
-		}
+		}*/
 	}
 }
