@@ -33,7 +33,6 @@ import openml.algorithms.Hashing;
 import openml.constants.Constants;
 import openml.io.ApiConnector;
 import openml.io.ApiSessionHash;
-import openml.xml.ApiError;
 import openml.xml.DataSetDescription;
 import openml.xml.UploadDataSet;
 import openml.xstream.XstreamXmlMapping;
@@ -180,19 +179,8 @@ public class RegisterDatasetDialog extends JDialog implements Observer {
 					Hashing.md5(tmpDatasetFile));
 				
 				tmpDescriptionFile = Conversion.stringToTempFile(xstream.toXML(dsd), "weka_tmp_description");
-				String result = ApiConnector.openmlDataUpload(tmpDescriptionFile, tmpDatasetFile, apiSessionHash.getSessionHash());
-				Object resultObject = xstream.fromXML(result);
-				if(resultObject instanceof ApiError) {
-					ApiError error = (ApiError) resultObject;
-					JOptionPane.showMessageDialog(parent,
-							error.getMessage(),
-						    "Error",
-						    JOptionPane.ERROR_MESSAGE);
-				} else {
-					UploadDataSet uds = (UploadDataSet) resultObject;
-				
-					JOptionPane.showMessageDialog(parent, "Dataset succesfully registered with id " + uds.getId() );
-				}
+				UploadDataSet uds = ApiConnector.openmlDataUpload(tmpDescriptionFile, tmpDatasetFile, apiSessionHash.getSessionHash());
+				JOptionPane.showMessageDialog(parent, "Dataset succesfully registered with id " + uds.getId() );
 			} catch (IOException e) {
 				JOptionPane.showMessageDialog(parent,
 						"An unexpected IO Exception has occured. ",
@@ -201,6 +189,11 @@ public class RegisterDatasetDialog extends JDialog implements Observer {
 			} catch (NoSuchAlgorithmException e) {
 				JOptionPane.showMessageDialog(parent,
 						"An unexpected Exception has occured. ",
+					    "Error",
+					    JOptionPane.ERROR_MESSAGE);
+			} catch (Exception e) {
+				JOptionPane.showMessageDialog(parent,
+						e.getMessage(),
 					    "Error",
 					    JOptionPane.ERROR_MESSAGE);
 			}

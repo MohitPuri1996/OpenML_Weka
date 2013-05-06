@@ -172,9 +172,9 @@ public class RunPanel
 		  + m_ExpCopy.getPropertyArrayValue(cnum).getClass().getName();
 		current += cname;
 	      }
-	      String dname = ((File) m_ExpCopy.getDatasets()
+	      String dname = (m_ExpCopy.getMode()) ? ((File) m_ExpCopy.getDatasets()
 			      .elementAt(m_ExpCopy.getCurrentDatasetNumber()))
-		.getName();
+		.getName() : "Task_" + m_ExpCopy.getCurrentDatasetNumber();
 	      current += Messages.getInstance().getString("RunPanel_ExperimentRunner_Run_Current_Text_Second") + dname
 		+ Messages.getInstance().getString("RunPanel_ExperimentRunner_Run_Current_Text_Third")  + (m_ExpCopy.getCurrentRunNumber());
 	      statusMessage(current);

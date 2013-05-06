@@ -11,7 +11,6 @@ import javax.swing.JOptionPane;
 import javax.swing.event.ListSelectionEvent;
 
 import openml.algorithms.Conversion;
-import openml.experiment.TaskBasedExperiment;
 import weka.core.Utils;
 import weka.core.ClassDiscovery.StringCompare;
 import weka.core.converters.ConverterUtils;

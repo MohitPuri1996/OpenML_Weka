@@ -7,7 +7,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
 import java.io.IOException;
-import java.security.NoSuchAlgorithmException;
 import java.util.Observable;
 import java.util.Observer;
 
@@ -31,7 +30,6 @@ import com.thoughtworks.xstream.XStream;
 import openml.algorithms.Conversion;
 import openml.io.ApiConnector;
 import openml.io.ApiSessionHash;
-import openml.xml.ApiError;
 import openml.xml.Implementation;
 import openml.xml.UploadImplementation;
 import openml.xstream.XstreamXmlMapping;
@@ -209,8 +207,9 @@ public class RegisterImplementationDialog extends JDialog implements Observer {
 				System.out.println(implementationXml);
 				tmpDescriptionFile = Conversion.stringToTempFile(implementationXml, "weka_tmp_implementation");
 				
-				String result = ApiConnector.openmlImplementationUpload(tmpDescriptionFile, sourceFile, binaryFile, apiSessionHash.getSessionHash());
-				Object resultObject = xstream.fromXML(result);
+				UploadImplementation ui = ApiConnector.openmlImplementationUpload(tmpDescriptionFile, sourceFile, binaryFile, apiSessionHash.getSessionHash());
+				JOptionPane.showMessageDialog(parent, "Implementation succesfully registered with id " + ui.getId() );
+				/*Object resultObject = xstream.fromXML(result);
 				System.out.println(result);
 				if(resultObject instanceof ApiError) {
 					ApiError error = (ApiError) resultObject;
@@ -222,7 +221,7 @@ public class RegisterImplementationDialog extends JDialog implements Observer {
 					UploadImplementation ui = (UploadImplementation) resultObject;
 				
 					JOptionPane.showMessageDialog(parent, "Implementation succesfully registered with id " + ui.getId() );
-				}
+				}*/
 			} catch (IOException e) {
 				JOptionPane.showMessageDialog(parent,
 						"An unexpected IO Exception has occured. ",
@@ -233,7 +232,12 @@ public class RegisterImplementationDialog extends JDialog implements Observer {
 						"An unexpected Exception has occured. ",
 					    "Error",
 					    JOptionPane.ERROR_MESSAGE);
-			}*/
+			}*/ catch (Exception e) {
+				JOptionPane.showMessageDialog(parent,
+						e.getMessage(),
+					    "Error",
+					    JOptionPane.ERROR_MESSAGE);
+			}
 			
 		} else {
 			requestedSubmission = true;

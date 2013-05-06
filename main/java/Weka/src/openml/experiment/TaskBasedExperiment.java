@@ -4,15 +4,12 @@ import java.lang.reflect.Array;
 
 import javax.swing.DefaultListModel;
 
-import com.thoughtworks.xstream.XStream;
-
 import openml.algorithms.InstancesHelper;
 import openml.io.ApiConnector;
 import openml.xml.ApiError;
 import openml.xml.DataSetDescription;
 import openml.xml.Task;
 import openml.xml.Task.Input.Data_set;
-import openml.xstream.XstreamXmlMapping;
 
 import weka.core.Instances;
 import weka.experiment.Experiment;
@@ -32,9 +29,6 @@ public class TaskBasedExperiment extends Experiment {
 
 	/** The task currently being used */
 	protected Task m_CurrentTask;
-	
-	/** For xml serialization */
-	private final transient XStream xstream = XstreamXmlMapping.getInstance();
 
 	public TaskBasedExperiment(Experiment exp) {
 		this.m_ResultListener = exp.getResultListener();
@@ -94,12 +88,7 @@ public class TaskBasedExperiment extends Experiment {
 			m_CurrentTask = (Task) objTask;
 			
 			Data_set ds = m_CurrentTask.getInputs()[0].getData_set();
-			Object objDsd = xstream.fromXML( ApiConnector.openmlDataDescription(ds.getData_set_id()) );
-			
-			if(objDsd instanceof ApiError) {
-				throw new Exception("An error has occured while getting data set description " + ds.getData_set_id() );
-			}
-			DataSetDescription dsd = (DataSetDescription) objDsd;
+			DataSetDescription dsd = ApiConnector.openmlDataDescription(ds.getData_set_id());
 			Instances instDataset = ApiConnector.getDatasetFromUrl(dsd.getUrl());
 			InstancesHelper.setTargetAttribute(instDataset, ds.getTarget_feature());
 			

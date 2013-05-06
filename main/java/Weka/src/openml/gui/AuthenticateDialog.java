@@ -22,13 +22,9 @@ import javax.swing.JPasswordField;
 import javax.swing.JTextField;
 import javax.swing.text.JTextComponent;
 
-import com.thoughtworks.xstream.XStream;
-
 import openml.io.ApiConnector;
 import openml.io.ApiSessionHash;
-import openml.xml.ApiError;
 import openml.xml.Authenticate;
-import openml.xstream.XstreamXmlMapping;
 
 public class AuthenticateDialog extends JDialog {
 	
@@ -105,10 +101,10 @@ public class AuthenticateDialog extends JDialog {
 		submit.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent a) {
 				try {
-					XStream xstream = XstreamXmlMapping.getInstance();
-					String response = ApiConnector.openmlAuthenticate(textComponent[0].getText(),textComponent[1].getText());
+					Authenticate auth = ApiConnector.openmlAuthenticate(textComponent[0].getText(),textComponent[1].getText());
+					sessionHash.set(null, auth.getSessionHash(), auth.getValidUntil());
 					
-					Object xml = xstream.fromXML(response);
+					/*Object xml = xstream.fromXML(response);
 					if( xml instanceof ApiError ) {
 						ApiError error = (ApiError) xml;
 						JOptionPane.showMessageDialog(parent,
@@ -119,7 +115,7 @@ public class AuthenticateDialog extends JDialog {
 						// TODO: set also username. 
 						Authenticate auth = (Authenticate) xml;
 						sessionHash.set(null, auth.getSessionHash(), auth.getValidUntil());
-					}
+					}*/
 				} catch (IOException e) {
 					JOptionPane.showMessageDialog(parent,
 							"An unexpected IO Exception has occured. ",
@@ -133,6 +129,11 @@ public class AuthenticateDialog extends JDialog {
 				} catch (ParseException e) {
 					JOptionPane.showMessageDialog(parent,
 							"An unexpected Parse Exception has occured. ",
+						    "Error",
+						    JOptionPane.ERROR_MESSAGE);
+				} catch (Exception e) {
+					JOptionPane.showMessageDialog(parent,
+							e.getMessage(),
 						    "Error",
 						    JOptionPane.ERROR_MESSAGE);
 				} 

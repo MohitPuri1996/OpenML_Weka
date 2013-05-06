@@ -6,12 +6,19 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.URL;
 import java.net.URLConnection;
-import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.zip.DataFormatException;
 
 import openml.algorithms.Hashing;
 import openml.constants.Settings;
+import openml.xml.ApiError;
+import openml.xml.Authenticate;
+import openml.xml.DataSetDescription;
+import openml.xml.Task;
+import openml.xml.UploadDataSet;
+import openml.xml.UploadImplementation;
+import openml.xstream.XstreamXmlMapping;
 
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
@@ -25,37 +32,62 @@ import org.apache.http.entity.mime.content.StringBody;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.message.BasicNameValuePair;
 
+import com.thoughtworks.xstream.XStream;
+
 import weka.core.Instances;
 
 public class ApiConnector {
 	private static final String API_URL = Settings.BASE_URL + "api/";
+	private static XStream xstream = XstreamXmlMapping.getInstance();
 	
 	private static HttpClient httpclient;
 	
-	public static String openmlAuthenticate( String username, String password ) throws IOException, NoSuchAlgorithmException {
+	public static Authenticate openmlAuthenticate( String username, String password ) throws Exception {
 		List<NameValuePair> params = new ArrayList<NameValuePair>(2);
 		params.add(new BasicNameValuePair("username", username));
 		params.add(new BasicNameValuePair("password", Hashing.md5( password )));
-		return doApiRequest("openml.authenticate", "", new UrlEncodedFormEntity(params, "UTF-8"));
+		
+		Object apiResult = doApiRequest("openml.authenticate", "", new UrlEncodedFormEntity(params, "UTF-8"));
+        if( apiResult instanceof Authenticate){
+        	return (Authenticate) apiResult;
+        } else {
+        	throw new DataFormatException("Casting Api Object to Authenticate");
+        }
 	}
 	
-	public static String openmlDataDescription( int did ) throws IOException {
-		return doApiRequest("openml.data.description", "&data_id=" + did );
+	public static DataSetDescription openmlDataDescription( int did ) throws Exception {
+		Object apiResult = doApiRequest("openml.data.description", "&data_id=" + did );
+        if( apiResult instanceof DataSetDescription){
+        	return (DataSetDescription) apiResult;
+        } else {
+        	throw new DataFormatException("Casting Api Object to DataSetDescription");
+        }
 	}
 	
-	public static String openmlTasksSearch( int task_id ) throws IOException {
-		return doApiRequest("openml.tasks.search", "&task_id=" + task_id );
+	public static Task openmlTasksSearch( int task_id ) throws Exception {
+		Object apiResult = doApiRequest("openml.tasks.search", "&task_id=" + task_id );
+        if( apiResult instanceof Task){
+        	return (Task) apiResult;
+        } else {
+        	throw new DataFormatException("Casting Api Object to Task");
+        }
 	}
 	
-	public static String openmlDataUpload( File description, File dataset, String session_hash ) throws IOException {
+	public static UploadDataSet openmlDataUpload( File description, File dataset, String session_hash ) throws Exception {
 		MultipartEntity params = new MultipartEntity();
 		params.addPart("description", new FileBody(description));
 		params.addPart("dataset", new FileBody(dataset));
 		params.addPart("session_hash",new StringBody(session_hash));
-        return doApiRequest("openml.data.upload", "", params);
+        
+        Object apiResult = doApiRequest("openml.data.upload", "", params);
+        if( apiResult instanceof UploadDataSet){
+        	return (UploadDataSet) apiResult;
+        } else {
+        	throw new DataFormatException("Casting Api Object to UploadDataSet");
+        }
 	}
 	
-	public static String openmlImplementationUpload( File description, File binary, File source, String session_hash ) throws IOException {
+	public static UploadImplementation openmlImplementationUpload( File description, File binary, File source, String session_hash ) throws Exception {
 		MultipartEntity params = new MultipartEntity();
 		params.addPart("description", new FileBody(description));
 		if(source != null)
@@ -63,7 +95,13 @@ public class ApiConnector {
 		if(binary != null)
 			params.addPart("binary", new FileBody(binary));
 		params.addPart("session_hash",new StringBody(session_hash));
-        return doApiRequest("openml.implementation.upload", "", params);
+		
+        Object apiResult = doApiRequest("openml.implementation.upload", "", params);
+        if( apiResult instanceof UploadImplementation){
+        	return (UploadImplementation) apiResult;
+        } else {
+        	throw new DataFormatException("Casting Api Object to UploadImplementation");
+        }
 	}
 	
 	public static Instances getDatasetFromUrl( String url ) throws IOException {
@@ -74,11 +112,11 @@ public class ApiConnector {
 		return dataset;
 	}
 	
-	private static String doApiRequest(String function, String queryString) throws IOException {
+	private static Object doApiRequest(String function, String queryString) throws Exception {
 		return doApiRequest(function, queryString, null);
 	}
 	
-	private static String doApiRequest(String function, String queryString, HttpEntity entity) throws IOException {
+	private static Object doApiRequest(String function, String queryString, HttpEntity entity) throws Exception {
 		String result = "";
 		httpclient = new DefaultHttpClient();
 		String requestUri = API_URL + "?f=" + function + queryString;
@@ -100,7 +138,12 @@ public class ApiConnector {
 		} finally {
             try { httpclient.getConnectionManager().shutdown(); } catch (Exception ignore) {}
         }
-		return result;
+		Object apiResult = xstream.fromXML(result);
+		if(apiResult instanceof ApiError) {
+			ApiError apiError = (ApiError) apiResult;
+			throw new Exception("ApiError " + apiError.getCode() + ": " + apiError.getMessage() );
+		}
+		return apiResult;
 	}
 	
 	private static String httpEntitiToString(HttpEntity resEntity) throws IOException {

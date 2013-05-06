@@ -9,6 +9,7 @@ import openml.xml.UploadDataSet;
 import openml.xml.UploadImplementation;
 
 import com.thoughtworks.xstream.XStream;
+import com.thoughtworks.xstream.converters.extended.ToAttributedValueConverter;
 import com.thoughtworks.xstream.io.naming.NoNameCoder;
 import com.thoughtworks.xstream.io.xml.DomDriver;
 
@@ -76,13 +77,13 @@ public class XstreamXmlMapping {
 		
 		// tasks
 		xstream.alias("oml:task", Task.class);
-		xstream.alias("oml:input", Task.Input.class);
+		//xstream.alias("oml:input", Task.Input.class);
 		xstream.alias("oml:data_set", Task.Input.Data_set.class);
 		xstream.alias("oml:estimation_procedure", Task.Input.Estimation_procedure.class);
-		xstream.alias("oml:parameter", Task.Input.Estimation_procedure.Parameter.class);
-		xstream.alias("oml:evaluation_measures", Task.Input.Evaluation_measures.class);
-		xstream.alias("oml:output", Task.Output.class);
-		xstream.alias("oml:predictions", Task.Output.Predictions.class);
+		//xstream.alias("oml:parameter", Task.Input.Estimation_procedure.Parameter.class);
+		//xstream.alias("oml:evaluation_measures", Task.Input.Evaluation_measures.class);
+		//xstream.alias("oml:output", Task.Output.class);
+		//xstream.alias("oml:predictions", Task.Output.Predictions.class);
 		xstream.alias("oml:feature", Task.Output.Predictions.Feature.class);
 		xstream.aliasAttribute(Task.class, "oml", "xmlns:oml");
 		
@@ -104,6 +105,14 @@ public class XstreamXmlMapping {
 		xstream.aliasField("oml:evaluation_measures", Task.Input.class, "evaluation_measures");
 		xstream.aliasField("oml:predictions", Task.Output.class, "predictions");
 		xstream.aliasField("oml:format", Task.Output.Predictions.class, "format");
+		
+		xstream.useAttributeFor(Task.Input.class, "name");
+		xstream.useAttributeFor(Task.Output.class, "name");
+		xstream.useAttributeFor(Task.Input.Estimation_procedure.Parameter.class, "name");
+		xstream.useAttributeFor(Task.Output.Predictions.Feature.class, "name");
+		xstream.useAttributeFor(Task.Output.Predictions.Feature.class, "type");
+		
+		xstream.registerConverter(new ToAttributedValueConverter(Task.Input.Estimation_procedure.Parameter.class, xstream.getMapper(), xstream.getReflectionProvider(), xstream.getConverterLookup(), "value"));
 		
 		return xstream;
 	}

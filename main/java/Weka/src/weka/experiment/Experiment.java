@@ -54,15 +54,14 @@ import java.util.Vector;
 
 import javax.swing.DefaultListModel;
 
-import openml.algorithms.InstancesHelper;
-import openml.io.ApiConnector;
-import openml.xml.ApiError;
-import openml.xml.DataSetDescription;
-import openml.xml.Task;
-import openml.xml.Task.Input.Data_set;
-import openml.xstream.XstreamXmlMapping;
-
 import com.thoughtworks.xstream.XStream;
+
+import openml.algorithms.TaskInformation;
+import openml.experiment.TaskResultProducer;
+import openml.io.ApiConnector;
+import openml.xml.Task;
+import openml.xml.Task.Input.Estimation_procedure;
+import openml.xstream.XstreamXmlMapping;
 
 /**
  * Holds all the necessary configuration information for a standard
@@ -353,8 +352,6 @@ public class Experiment
   protected transient Instances m_CurrentInstances;
   /** The custom property value that has actually been set */
   protected transient int m_CurrentProperty;
-  /** For xml serialization */
-  private final transient XStream xstream = XstreamXmlMapping.getInstance();
 
   /**
    * When an experiment is running, this returns the current run number.
@@ -386,6 +383,10 @@ public class Experiment
   
   public void setMode(boolean datasetBasedExperiment) {
 	this.datasetBasedExperiment = datasetBasedExperiment;
+  }
+  
+  public boolean getMode() {
+	  return datasetBasedExperiment;
   }
 
   public DefaultListModel<Integer> getTasks() {
@@ -589,23 +590,12 @@ public class Experiment
   
   private void nextIterationTaskBased() throws Exception {
 	  if(m_CurrentTask == null) {
-			Object objTask = xstream.fromXML( ApiConnector.openmlTasksSearch( getTasks().elementAt(m_DatasetNumber) ) );
-			if(objTask instanceof ApiError) {
-				throw new Exception("An error has occured while getting task " + getTasks().elementAt(m_DatasetNumber) );
-			}
-			m_CurrentTask = (Task) objTask;
-			
-			Data_set ds = m_CurrentTask.getInputs()[0].getData_set();
-			Object objDsd = xstream.fromXML( ApiConnector.openmlDataDescription(ds.getData_set_id()) );
-			
-			if(objDsd instanceof ApiError) {
-				throw new Exception("An error has occured while getting data set description " + ds.getData_set_id() );
-			}
-			DataSetDescription dsd = (DataSetDescription) objDsd;
-			Instances instDataset = ApiConnector.getDatasetFromUrl(dsd.getUrl());
-			InstancesHelper.setTargetAttribute(instDataset, ds.getTarget_feature());
-			
-			m_ResultProducer.setInstances(instDataset);
+			TaskResultProducer trp = (TaskResultProducer) m_ResultProducer;
+		  	m_CurrentTask = ApiConnector.openmlTasksSearch( getTasks().elementAt(m_DatasetNumber) );
+		  	XStream xstream = XstreamXmlMapping.getInstance();
+		  	System.out.println(xstream.toXML(m_CurrentTask) );
+		  	this.setRunUpper(TaskInformation.getNumberOfRepeats(m_CurrentTask));
+			trp.setTask(m_CurrentTask);
 		}
   }
 
