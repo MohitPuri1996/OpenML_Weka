@@ -10,6 +10,7 @@ import openml.xml.Task.Input.Estimation_procedure;
 
 import weka.core.Instances;
 import weka.core.Utils;
+import weka.experiment.ClassifierSplitEvaluator;
 import weka.experiment.CrossValidationResultProducer;
 import weka.experiment.OutputZipper;
 
@@ -25,6 +26,14 @@ public class TaskResultProducer extends CrossValidationResultProducer {
 	
 	/** Instances file with splits in it **/
 	protected Instances m_Splits;
+	
+	public TaskResultProducer() {
+		super();
+
+		if (getSplitEvaluator() instanceof ClassifierSplitEvaluator) {
+			((ClassifierSplitEvaluator) getSplitEvaluator()).setPredTargetColumn(true);
+		}
+	}
 	
 	public void setTask (Task t) throws Exception {
 		m_Task = t;

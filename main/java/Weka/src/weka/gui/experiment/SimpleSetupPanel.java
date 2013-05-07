@@ -55,6 +55,7 @@ import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.beans.PropertyDescriptor;
 import java.io.File;
+import java.io.IOException;
 
 import javax.swing.BorderFactory;
 import javax.swing.ButtonGroup;
@@ -73,6 +74,8 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.filechooser.FileFilter;
 
+import openml.constants.Constants;
+import openml.experiment.TaskResultListener;
 import openml.experiment.TaskResultProducer;
 import openml.gui.TaskListPanel;
 
@@ -201,6 +204,7 @@ public class SimpleSetupPanel
   protected static String DEST_DATABASE_TEXT = (Messages.getInstance().getString("SimpleSetupPanel_DEST_DATABASE_TEXT_Text"));
   protected static String DEST_ARFF_TEXT = (Messages.getInstance().getString("SimpleSetupPanel_DEST_ARFF_TEXT_Text"));
   protected static String DEST_CSV_TEXT = (Messages.getInstance().getString("SimpleSetupPanel_DEST_CSV_TEXT_Text"));
+  protected static String DEST_OPENML_TEXT = "OpenML.org";
   protected static String TYPE_CROSSVALIDATION_TEXT = (Messages.getInstance().getString("SimpleSetupPanel_TYPE_CROSSVALIDATION_TEXT_Text"));
   protected static String TYPE_RANDOMSPLIT_TEXT = (Messages.getInstance().getString("SimpleSetupPanel_TYPE_RANDOMSPLIT_TEXT_Text"));
   protected static String TYPE_FIXEDSPLIT_TEXT = (Messages.getInstance().getString("SimpleSetupPanel_TYPE_FIXEDSPLIT_TEXT_Text"));
@@ -452,6 +456,7 @@ public class SimpleSetupPanel
     m_ResultsDestinationCBox.addItem(DEST_ARFF_TEXT);
     m_ResultsDestinationCBox.addItem(DEST_CSV_TEXT);
     m_ResultsDestinationCBox.addItem(DEST_DATABASE_TEXT);
+    m_ResultsDestinationCBox.addItem(DEST_OPENML_TEXT);
     
     m_ResultsDestinationCBox.addActionListener(new ActionListener() {
 	public void actionPerformed(ActionEvent e) {
@@ -915,7 +920,12 @@ public class SimpleSetupPanel
       m_ResultsDestinationPathLabel.setText(Messages.getInstance().getString("SimpleSetupPanel_DestinationTypeChanged_DEST_DATABASE_TEXT_ResultsDestinationPathLabel_Text_First"));
       str = m_destinationDatabaseURL;
       m_BrowseDestinationButton.setEnabled(true); //!!!
+      m_ResultsDestinationPathTField.setEnabled(true);
       m_BrowseDestinationButton.setText(Messages.getInstance().getString("SimpleSetupPanel_DestinationTypeChanged_DEST_DATABASE_TEXT_BrowseDestinationButton_Text"));
+    } else if(m_ResultsDestinationCBox.getSelectedItem() == DEST_OPENML_TEXT) {
+      m_BrowseDestinationButton.setEnabled(false);
+      m_ResultsDestinationPathTField.setEnabled(false);
+      m_ExperimentTypeCBox.setSelectedItem(TYPE_OPENML_TASK_TEXT);
     } else {
       m_ResultsDestinationPathLabel.setText(Messages.getInstance().getString("SimpleSetupPanel_DestinationTypeChanged_DEST_DATABASE_TEXT_ResultsDestinationPathLabel_Text_Second"));
       if (m_ResultsDestinationCBox.getSelectedItem() == DEST_ARFF_TEXT) {
@@ -944,6 +954,7 @@ public class SimpleSetupPanel
 	}
       }
       m_BrowseDestinationButton.setEnabled(true);
+      m_ResultsDestinationPathTField.setEnabled(true);
       m_BrowseDestinationButton.setText(Messages.getInstance().getString("SimpleSetupPanel_DestinationTypeChanged_BrowseDestinationButton_Text"));
     }
 
@@ -969,6 +980,16 @@ public class SimpleSetupPanel
 	  crl.setOutputFile(new File(m_destinationFilename));
 	}
 	m_Exp.setResultListener(crl);
+      } else if (m_ResultsDestinationCBox.getSelectedItem() == DEST_OPENML_TEXT) {
+        TaskResultListener trl = new TaskResultListener();
+        try {
+          File f = File.createTempFile("WekaOpenMLResults", Constants.DATASET_FORMAT);
+          f.deleteOnExit();
+          trl.setOutputFile( f );
+        } catch(IOException e) {
+          e.printStackTrace();
+        }
+        m_Exp.setResultListener(trl);
       }
     }
 
@@ -1058,6 +1079,10 @@ public class SimpleSetupPanel
       m_TaskListPanel.setMode(true);
       m_ExperimentParameterTField.setEnabled(true);
       m_Exp.setMode(true);
+      
+      if(m_ResultsDestinationCBox.getSelectedItem() == DEST_OPENML_TEXT) {
+        m_ResultsDestinationCBox.setSelectedItem(DEST_ARFF_TEXT);
+      }
     }
 
     // update iteration ui
