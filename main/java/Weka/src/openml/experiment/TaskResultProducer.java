@@ -1,6 +1,7 @@
 package openml.experiment;
 
 import openml.algorithms.InstancesHelper;
+import openml.algorithms.TaskInformation;
 import openml.io.ApiConnector;
 import openml.xml.DataSetDescription;
 import openml.xml.Task;
@@ -28,9 +29,8 @@ public class TaskResultProducer extends CrossValidationResultProducer {
 	public void setTask (Task t) throws Exception {
 		m_Task = t;
 		
-		// TODO: pick right input
-		Data_set ds = t.getInputs()[0].getData_set();
-		Estimation_procedure ep = t.getInputs()[1].getEstimation_procedure();
+		Data_set ds = TaskInformation.getSourceData(m_Task);
+		Estimation_procedure ep = TaskInformation.getEstimationProcedure(m_Task);
 		
 		DataSetDescription dsd = ApiConnector.openmlDataDescription(ds.getData_set_id());
 		m_Instances = ApiConnector.getDatasetFromUrl(dsd.getUrl());
@@ -40,7 +40,6 @@ public class TaskResultProducer extends CrossValidationResultProducer {
 	
 	@Override
 	public void doRun(int run) throws Exception {
-		System.out.println("TaskResultProducer run #" + run );
 		int attTypeIndex = m_Splits.attribute("type").index();
 		int attRowidIndex = m_Splits.attribute("rowid").index();
 		int attFoldIndex = m_Splits.attribute("fold").index();

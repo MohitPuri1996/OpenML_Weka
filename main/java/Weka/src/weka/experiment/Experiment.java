@@ -54,14 +54,10 @@ import java.util.Vector;
 
 import javax.swing.DefaultListModel;
 
-import com.thoughtworks.xstream.XStream;
-
 import openml.algorithms.TaskInformation;
 import openml.experiment.TaskResultProducer;
 import openml.io.ApiConnector;
 import openml.xml.Task;
-import openml.xml.Task.Input.Estimation_procedure;
-import openml.xstream.XstreamXmlMapping;
 
 /**
  * Holds all the necessary configuration information for a standard
@@ -592,8 +588,6 @@ public class Experiment
 	  if(m_CurrentTask == null) {
 			TaskResultProducer trp = (TaskResultProducer) m_ResultProducer;
 		  	m_CurrentTask = ApiConnector.openmlTasksSearch( getTasks().elementAt(m_DatasetNumber) );
-		  	XStream xstream = XstreamXmlMapping.getInstance();
-		  	System.out.println(xstream.toXML(m_CurrentTask) );
 		  	this.setRunUpper(TaskInformation.getNumberOfRepeats(m_CurrentTask));
 			trp.setTask(m_CurrentTask);
 		}
