@@ -8,6 +8,7 @@ import openml.xml.Run;
 import openml.xml.Task;
 import openml.xml.UploadDataSet;
 import openml.xml.UploadImplementation;
+import openml.xml.UploadRun;
 
 import com.thoughtworks.xstream.XStream;
 import com.thoughtworks.xstream.converters.extended.ToAttributedValueConverter;
@@ -125,6 +126,10 @@ public class XstreamXmlMapping {
 		xstream.aliasField("oml:name", Run.Parameter_setting.class, "name");
 		xstream.aliasField("oml:component", Run.Parameter_setting.class, "component");
 		xstream.aliasField("oml:value", Run.Parameter_setting.class, "value");
+		
+		// upload run
+		xstream.alias("oml:upload_run", UploadRun.class);
+		xstream.aliasField("oml:run_id", UploadRun.class, "run_id");
 		
 		return xstream;
 	}

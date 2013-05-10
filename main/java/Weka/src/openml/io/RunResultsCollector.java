@@ -2,14 +2,13 @@ package openml.io;
 
 import java.io.Serializable;
 import java.util.HashMap;
-
-import com.thoughtworks.xstream.XStream;
+import java.util.Map;
+import java.util.Observable;
 
 import openml.algorithms.TaskInformation;
 import openml.xml.Run;
 import openml.xml.Task;
 import openml.xml.Task.Output.Predictions.Feature;
-import openml.xstream.XstreamXmlMapping;
 
 import weka.classifiers.evaluation.NominalPrediction;
 import weka.classifiers.evaluation.Prediction;
@@ -18,14 +17,14 @@ import weka.core.FastVector;
 import weka.core.Instance;
 import weka.core.Instances;
 
-public class RunResultsCollector implements Serializable {
+public class RunResultsCollector extends Observable implements Serializable {
 
 	private static final long serialVersionUID = 4789455211L;
 	
-	private HashMap<String, OpenmlExecutedTask> results;
+	private final Map<String, OpenmlExecutedTask> currentlyCollecting;
 
 	public RunResultsCollector() {
-		results = new HashMap<String, OpenmlExecutedTask>();
+		currentlyCollecting = new HashMap<String, OpenmlExecutedTask>();
 	}
 
 	public void acceptResults(Task t, Integer repeat, Integer fold,
@@ -33,17 +32,17 @@ public class RunResultsCollector implements Serializable {
 			FastVector predictions) throws Exception {
 		String implementationId = implementation + "(" + version + ")";
 		String key = t.getTask_id() + "_" + implementationId + "_" + options;
-		if( results.containsKey(key) == false)
-			results.put(key, new OpenmlExecutedTask(t, implementationId, options) );
-		results.get(key).addBatch(fold, repeat, rowids, predictions);
-		if(results.get(key).complete()) {
-			System.out.println("Key: "+ key);
-			XStream xstream = XstreamXmlMapping.getInstance();
-			System.out.println(xstream.toXML(results.get(key).run));
+		if( currentlyCollecting.containsKey(key) == false)
+			currentlyCollecting.put(key, new OpenmlExecutedTask(t, implementationId, options) );
+		currentlyCollecting.get(key).addBatch(fold, repeat, rowids, predictions);
+		
+		if(currentlyCollecting.get(key).complete()) {
+			notifyObservers(currentlyCollecting.get(key));
+			currentlyCollecting.remove(key);
 		}
 	}
 
-	private class OpenmlExecutedTask {
+	public class OpenmlExecutedTask {
 
 		private Instances predictions;
 		private int nrOfResultBatches;
@@ -96,6 +95,14 @@ public class RunResultsCollector implements Serializable {
 				
 				predictions.add(new Instance(1.0D, values));
 			}
+		}
+		
+		public Run getRun() {
+			return run;
+		}
+		
+		public Instances getPredictions() {
+			return predictions;
 		}
 
 		public boolean complete() {

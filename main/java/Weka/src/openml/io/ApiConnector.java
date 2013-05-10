@@ -8,6 +8,7 @@ import java.net.URL;
 import java.net.URLConnection;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.zip.DataFormatException;
 
 import openml.algorithms.Hashing;
@@ -18,6 +19,7 @@ import openml.xml.DataSetDescription;
 import openml.xml.Task;
 import openml.xml.UploadDataSet;
 import openml.xml.UploadImplementation;
+import openml.xml.UploadRun;
 import openml.xstream.XstreamXmlMapping;
 
 import org.apache.http.HttpEntity;
@@ -104,6 +106,22 @@ public class ApiConnector {
         }
 	}
 	
+	public static UploadRun openmlRunUpload( File description, Map<String,File> output_files, String session_hash ) throws Exception {
+		MultipartEntity params = new MultipartEntity();
+		params.addPart("description", new FileBody(description));
+		for( String s : output_files.keySet() ) {
+			params.addPart(s,new FileBody(output_files.get(s)));
+		}
+		params.addPart("session_hash",new StringBody(session_hash));
+		Object apiResult = doApiRequest("openml.run.upload", "", params);
+		
+        if( apiResult instanceof UploadRun){
+        	return (UploadRun) apiResult;
+        } else {
+        	throw new DataFormatException("Casting Api Object to UploadRun");
+        }
+	}
+	
 	public static Instances getDatasetFromUrl( String url ) throws IOException {
 		URL openml_url = new URL(url);
 		URLConnection conn = openml_url.openConnection();
@@ -133,7 +151,7 @@ public class ApiConnector {
             if (resEntity != null) {
             	result = httpEntitiToString(resEntity);
             } else {
-            	// TODO: throw exception.  
+            	throw new Exception("An exception has occured while reading data input stream. ");
             }
 		} finally {
             try { httpclient.getConnectionManager().shutdown(); } catch (Exception ignore) {}

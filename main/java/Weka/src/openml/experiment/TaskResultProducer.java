@@ -4,6 +4,7 @@ import openml.algorithms.InstancesHelper;
 import openml.algorithms.TaskInformation;
 import openml.io.ApiConnector;
 import openml.io.RunResultsCollector;
+import openml.io.RunResultsSubmitter;
 import openml.xml.DataSetDescription;
 import openml.xml.Task;
 import openml.xml.Task.Input.Data_set;
@@ -29,19 +30,20 @@ public class TaskResultProducer extends CrossValidationResultProducer {
 	/** Instances file with splits in it **/
 	protected Instances m_Splits;
 	
-	/** Sending results to server */
+	/** Collecting results before sending to server */
 	protected RunResultsCollector m_ResultsCollector;
+	
+
+	/** Sending results to server */
+	protected RunResultsSubmitter m_ResultsSubmitter;
 
 	public TaskResultProducer() {
 		super();
 		
 		m_SplitEvaluator = new TaskSplitEvaluator();
+		m_ResultsSubmitter = new RunResultsSubmitter();
 		m_ResultsCollector = new RunResultsCollector();
-		
-		/*if (getSplitEvaluator() instanceof ClassifierSplitEvaluator) {
-			((ClassifierSplitEvaluator) getSplitEvaluator())
-					.setPredTargetColumn(true);
-		}*/
+		m_ResultsCollector.addObserver(m_ResultsSubmitter);
 	}
 
 	public void setTask(Task t) throws Exception {
@@ -167,7 +169,7 @@ public class TaskResultProducer extends CrossValidationResultProducer {
 					System.arraycopy(seResults, 0, results, 1, seResults.length);
 
 					m_ResultListener.acceptResult(this, key, results);
-					// TODO: do better than just key[4] and key[5]
+					// TODO: do better than just key[4], key[5] and key[6]
 					m_ResultsCollector.acceptResults(m_Task, run, fold, (String) key[4], (String) key[5], (String) key[6], rowids, ((TaskSplitEvaluator) m_SplitEvaluator).recentPredictions());
 				} catch (Exception ex) {
 					// Save the train and test datasets for debugging purposes?
