@@ -129,22 +129,22 @@ public class ClassifierSplitEvaluator
   private static final int KEY_SIZE = 3;
 
   /** The length of a result */
-  private static final int RESULT_SIZE = 28;
+  protected static final int RESULT_SIZE = 28;
 
   /** The number of IR statistics */
-  private static final int NUM_IR_STATISTICS = 14;
+  protected static final int NUM_IR_STATISTICS = 14;
   
   /** The number of averaged IR statistics */
-  private static final int NUM_WEIGHTED_IR_STATISTICS = 8;
+  protected static final int NUM_WEIGHTED_IR_STATISTICS = 8;
   
   /** Class index for information retrieval statistics (default 0) */
-  private int m_IRclass = 0;
+  protected int m_IRclass = 0;
   
   /** Flag for prediction and target columns output.*/
   private boolean m_predTargetColumn = false;
 
   /** Attribute index of instance identifier (default -1) */
-  private int m_attID = -1;
+  protected int m_attID = -1;
 
   /**
    * No args constructor.

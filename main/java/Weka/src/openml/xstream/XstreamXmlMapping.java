@@ -4,6 +4,7 @@ import openml.xml.Authenticate;
 import openml.xml.DataSetDescription;
 import openml.xml.ApiError;
 import openml.xml.Implementation;
+import openml.xml.Run;
 import openml.xml.Task;
 import openml.xml.UploadDataSet;
 import openml.xml.UploadImplementation;
@@ -113,6 +114,17 @@ public class XstreamXmlMapping {
 		xstream.useAttributeFor(Task.Output.Predictions.Feature.class, "type");
 		
 		xstream.registerConverter(new ToAttributedValueConverter(Task.Input.Estimation_procedure.Parameter.class, xstream.getMapper(), xstream.getReflectionProvider(), xstream.getConverterLookup(), "value"));
+		
+		// run
+		xstream.alias("oml:run", Run.class);
+		xstream.aliasAttribute(Run.class, "oml", "xmlns:oml");
+		xstream.addImplicitCollection(Run.class, "parameter_settings", "oml:parameter_setting", Run.Parameter_setting.class);
+		
+		xstream.aliasField("oml:task_id", Run.class, "task_id");
+		xstream.aliasField("oml:implementation_id", Run.class, "implementation_id");
+		xstream.aliasField("oml:name", Run.Parameter_setting.class, "name");
+		xstream.aliasField("oml:component", Run.Parameter_setting.class, "component");
+		xstream.aliasField("oml:value", Run.Parameter_setting.class, "value");
 		
 		return xstream;
 	}

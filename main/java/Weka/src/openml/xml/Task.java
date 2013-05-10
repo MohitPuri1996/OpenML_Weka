@@ -1,6 +1,7 @@
 package openml.xml;
 
 import openml.constants.Constants;
+import openml.io.ApiConnector;
 
 public class Task {
 	private final String oml = Constants.OPENML_XMLNS;
@@ -55,12 +56,19 @@ public class Task {
 		public class Data_set {
 			private Integer data_set_id;
 			private String target_feature;
+			private DataSetDescription dsdCache;
 			
 			public Integer getData_set_id() {
 				return data_set_id;
 			}
 			public String getTarget_feature() {
 				return target_feature;
+			}
+			public DataSetDescription getDataSetDescription() throws Exception {
+				if(dsdCache == null) {
+					dsdCache = ApiConnector.openmlDataDescription(data_set_id);
+				}
+				return dsdCache;
 			}
 		}
 		

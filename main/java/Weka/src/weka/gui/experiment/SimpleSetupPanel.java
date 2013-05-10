@@ -75,7 +75,6 @@ import javax.swing.event.DocumentListener;
 import javax.swing.filechooser.FileFilter;
 
 import openml.constants.Constants;
-import openml.experiment.TaskResultListener;
 import openml.experiment.TaskResultProducer;
 import openml.gui.TaskListPanel;
 
@@ -981,15 +980,15 @@ public class SimpleSetupPanel
 	}
 	m_Exp.setResultListener(crl);
       } else if (m_ResultsDestinationCBox.getSelectedItem() == DEST_OPENML_TEXT) {
-        TaskResultListener trl = new TaskResultListener();
+    	  InstancesResultListener irl = new InstancesResultListener();
         try {
           File f = File.createTempFile("WekaOpenMLResults", Constants.DATASET_FORMAT);
           f.deleteOnExit();
-          trl.setOutputFile( f );
+          irl.setOutputFile( f );
         } catch(IOException e) {
           e.printStackTrace();
         }
-        m_Exp.setResultListener(trl);
+        m_Exp.setResultListener(irl);
       }
     }
 

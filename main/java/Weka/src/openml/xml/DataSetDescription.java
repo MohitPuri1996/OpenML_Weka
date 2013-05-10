@@ -1,6 +1,10 @@
 package openml.xml;
 
+import java.io.IOException;
+
 import openml.constants.Constants;
+import openml.io.ApiConnector;
+import weka.core.Instances;
 
 
 public class DataSetDescription {
@@ -20,6 +24,7 @@ public class DataSetDescription {
 	private String url;
 	private String row_id_attribute;
 	private String md5_checksum;
+	private Instances datasetCache;
 	
 	/*
 	 *	Constructor used from the Register Dataset Dialog. Set "null" for unspecified values that are optional.
@@ -110,5 +115,12 @@ public class DataSetDescription {
 
 	public String getMd5_checksum() {
 		return md5_checksum;
+	}
+	
+	public Instances getDataset() throws IOException {
+		if(datasetCache == null) {
+			datasetCache = ApiConnector.getDatasetFromUrl(getUrl());
+		}
+		return datasetCache;
 	}
 }

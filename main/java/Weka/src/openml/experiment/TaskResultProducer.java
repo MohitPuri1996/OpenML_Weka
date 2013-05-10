@@ -3,6 +3,7 @@ package openml.experiment;
 import openml.algorithms.InstancesHelper;
 import openml.algorithms.TaskInformation;
 import openml.io.ApiConnector;
+import openml.io.RunResultsCollector;
 import openml.xml.DataSetDescription;
 import openml.xml.Task;
 import openml.xml.Task.Input.Data_set;
@@ -10,7 +11,6 @@ import openml.xml.Task.Input.Estimation_procedure;
 
 import weka.core.Instances;
 import weka.core.Utils;
-import weka.experiment.ClassifierSplitEvaluator;
 import weka.experiment.CrossValidationResultProducer;
 import weka.experiment.OutputZipper;
 
@@ -21,21 +21,27 @@ public class TaskResultProducer extends CrossValidationResultProducer {
 	private static final String FOLDS_FILE_TRAIN = "TRAIN";
 	private static final String FOLDS_FILE_TEST = "TEST";
 	
-	private static final String TASK_FIELD_NAME = "OpenML_Task_id";
+	public static final String TASK_FIELD_NAME = "OpenML_Task_id";
 
 	/** The task to be run */
 	protected Task m_Task;
 
 	/** Instances file with splits in it **/
 	protected Instances m_Splits;
+	
+	/** Sending results to server */
+	protected RunResultsCollector m_ResultsCollector;
 
 	public TaskResultProducer() {
 		super();
-
-		if (getSplitEvaluator() instanceof ClassifierSplitEvaluator) {
+		
+		m_SplitEvaluator = new TaskSplitEvaluator();
+		m_ResultsCollector = new RunResultsCollector();
+		
+		/*if (getSplitEvaluator() instanceof ClassifierSplitEvaluator) {
 			((ClassifierSplitEvaluator) getSplitEvaluator())
 					.setPredTargetColumn(true);
-		}
+		}*/
 	}
 
 	public void setTask(Task t) throws Exception {
@@ -45,9 +51,8 @@ public class TaskResultProducer extends CrossValidationResultProducer {
 		Estimation_procedure ep = TaskInformation
 				.getEstimationProcedure(m_Task);
 
-		DataSetDescription dsd = ApiConnector.openmlDataDescription(ds
-				.getData_set_id());
-		m_Instances = ApiConnector.getDatasetFromUrl(dsd.getUrl());
+		DataSetDescription dsd = ds.getDataSetDescription();
+		m_Instances = dsd.getDataset();
 		InstancesHelper.setTargetAttribute(m_Instances, ds.getTarget_feature());
 		m_Splits = ApiConnector.getDatasetFromUrl(ep.getData_splits_url());
 	}
@@ -99,7 +104,7 @@ public class TaskResultProducer extends CrossValidationResultProducer {
 		int attRowidIndex = m_Splits.attribute("rowid").index();
 		int attFoldIndex = m_Splits.attribute("fold").index();
 		int attRepeatIndex = m_Splits.attribute("repeat").index();
-
+		
 		if (getRawOutput()) {
 			if (m_ZipDest == null) {
 				m_ZipDest = new OutputZipper(m_OutputFile);
@@ -117,6 +122,7 @@ public class TaskResultProducer extends CrossValidationResultProducer {
 		// creating al empty copies for each fold
 		Instances[] trainingSets = new Instances[m_NumFolds];
 		Instances[] testSets = new Instances[m_NumFolds];
+		Integer[] rowids = new Integer[m_NumFolds];
 
 		for (int i = 0; i < m_NumFolds; ++i) {
 			trainingSets[i] = new Instances(m_Instances, 0, 0);
@@ -137,6 +143,7 @@ public class TaskResultProducer extends CrossValidationResultProducer {
 					trainingSets[fold].add(m_Instances.instance(rowid));
 				} else if (type.equals(FOLDS_FILE_TEST)) {
 					testSets[fold].add(m_Instances.instance(rowid));
+					rowids[fold] = rowid;
 				}
 			}
 		}
@@ -160,6 +167,8 @@ public class TaskResultProducer extends CrossValidationResultProducer {
 					System.arraycopy(seResults, 0, results, 1, seResults.length);
 
 					m_ResultListener.acceptResult(this, key, results);
+					// TODO: do better than just key[4] and key[5]
+					m_ResultsCollector.acceptResults(m_Task, run, fold, (String) key[4], (String) key[5], (String) key[6], rowids, ((TaskSplitEvaluator) m_SplitEvaluator).recentPredictions());
 				} catch (Exception ex) {
 					// Save the train and test datasets for debugging purposes?
 					throw ex;
