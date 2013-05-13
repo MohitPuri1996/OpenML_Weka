@@ -42,8 +42,7 @@ public class TaskResultProducer extends CrossValidationResultProducer {
 		
 		m_SplitEvaluator = new TaskSplitEvaluator();
 		m_ResultsSubmitter = new RunResultsSubmitter();
-		m_ResultsCollector = new RunResultsCollector();
-		m_ResultsCollector.addObserver(m_ResultsSubmitter);
+		m_ResultsCollector = new RunResultsCollector(m_ResultsSubmitter);
 	}
 
 	public void setTask(Task t) throws Exception {

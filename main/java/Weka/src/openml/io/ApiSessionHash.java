@@ -1,13 +1,15 @@
 package openml.io;
 
+import java.io.Serializable;
 import java.text.ParseException;
 import java.util.Date;
 import java.util.Observable;
 
 import openml.algorithms.DateParser;
 
-public class ApiSessionHash extends Observable {
+public class ApiSessionHash extends Observable implements Serializable {
 	
+	private static final long serialVersionUID = 7831245113631L;
 	private String username;
 	private String sessionHash;
 	private long validUntil;
@@ -27,7 +29,12 @@ public class ApiSessionHash extends Observable {
 		this.sessionHash = hash;
 		this.validUntil = DateParser.mysqlDateToTimeStamp(validUntil);
 		setChanged();
-		notifyObservers();
+		notifyObservers(true);
+	}
+	
+	public void failed() {
+		setChanged();
+		notifyObservers(false);
 	}
 
 	public String getUsername() {

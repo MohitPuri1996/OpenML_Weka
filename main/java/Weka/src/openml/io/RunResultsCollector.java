@@ -3,7 +3,6 @@ package openml.io;
 import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Observable;
 
 import openml.algorithms.TaskInformation;
 import openml.xml.Run;
@@ -17,14 +16,16 @@ import weka.core.FastVector;
 import weka.core.Instance;
 import weka.core.Instances;
 
-public class RunResultsCollector extends Observable implements Serializable {
+public class RunResultsCollector implements Serializable {
 
 	private static final long serialVersionUID = 4789455211L;
 	
 	private final Map<String, OpenmlExecutedTask> currentlyCollecting;
+	private final RunResultsSubmitter rrs;
 
-	public RunResultsCollector() {
+	public RunResultsCollector(RunResultsSubmitter rrs) {
 		currentlyCollecting = new HashMap<String, OpenmlExecutedTask>();
+		this.rrs = rrs;
 	}
 
 	public void acceptResults(Task t, Integer repeat, Integer fold,
@@ -37,7 +38,7 @@ public class RunResultsCollector extends Observable implements Serializable {
 		currentlyCollecting.get(key).addBatch(fold, repeat, rowids, predictions);
 		
 		if(currentlyCollecting.get(key).complete()) {
-			notifyObservers(currentlyCollecting.get(key));
+			rrs.acceptResult(currentlyCollecting.get(key));
 			currentlyCollecting.remove(key);
 		}
 	}

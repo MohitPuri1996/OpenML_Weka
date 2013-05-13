@@ -136,6 +136,7 @@ public class AuthenticateDialog extends JDialog {
 							e.getMessage(),
 						    "Error",
 						    JOptionPane.ERROR_MESSAGE);
+					sessionHash.failed();
 				} 
 				
 				setVisible(false);
