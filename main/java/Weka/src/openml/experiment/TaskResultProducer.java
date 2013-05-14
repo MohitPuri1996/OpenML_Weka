@@ -1,5 +1,11 @@
 package openml.experiment;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
+
+import org.apache.commons.lang3.ArrayUtils;
+
 import openml.algorithms.InstancesHelper;
 import openml.algorithms.TaskInformation;
 import openml.io.ApiConnector;
@@ -123,7 +129,7 @@ public class TaskResultProducer extends CrossValidationResultProducer {
 		// creating al empty copies for each fold
 		Instances[] trainingSets = new Instances[m_NumFolds];
 		Instances[] testSets = new Instances[m_NumFolds];
-		Integer[] rowids = new Integer[m_NumFolds];
+		Map<Integer, Integer[]> rowids = new HashMap<Integer, Integer[]>();
 
 		for (int i = 0; i < m_NumFolds; ++i) {
 			trainingSets[i] = new Instances(m_Instances, 0, 0);
@@ -144,7 +150,12 @@ public class TaskResultProducer extends CrossValidationResultProducer {
 					trainingSets[fold].add(m_Instances.instance(rowid));
 				} else if (type.equals(FOLDS_FILE_TEST)) {
 					testSets[fold].add(m_Instances.instance(rowid));
-					rowids[fold] = rowid;
+					if(rowids.containsKey(fold)) {
+						rowids.put( fold, ArrayUtils.addAll( rowids.get(fold), rowid ) );
+					} else {
+						Integer[] n = {rowid};
+						rowids.put( fold, n );
+					}
 				}
 			}
 		}
@@ -168,8 +179,10 @@ public class TaskResultProducer extends CrossValidationResultProducer {
 					System.arraycopy(seResults, 0, results, 1, seResults.length);
 
 					m_ResultListener.acceptResult(this, key, results);
-					// TODO: do better than just key[4], key[5] and key[6]
-					m_ResultsCollector.acceptResults(m_Task, run, fold, (String) key[4], (String) key[5], (String) key[6], rowids, ((TaskSplitEvaluator) m_SplitEvaluator).recentPredictions());
+					// TODO: do a better check
+					if(m_ResultListener instanceof TaskResultListener)
+						// TODO: do better than just key[4], key[5] and key[6]
+						m_ResultsCollector.acceptResults(m_Task, run, fold, (String) key[4], (String) key[5], (String) key[6], rowids.get(fold), ((TaskSplitEvaluator) m_SplitEvaluator).recentPredictions());
 				} catch (Exception ex) {
 					// Save the train and test datasets for debugging purposes?
 					throw ex;

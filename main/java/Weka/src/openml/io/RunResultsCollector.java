@@ -1,6 +1,7 @@
 package openml.io;
 
 import java.io.Serializable;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -49,6 +50,7 @@ public class RunResultsCollector implements Serializable {
 		private int nrOfResultBatches;
 		private final int nrOfExpectedResultBatches;
 		private String[] classnames;
+		private String implementation;
 		private Run run;
 
 		public OpenmlExecutedTask(Task t, String implementation, String options) throws Exception {
@@ -75,6 +77,7 @@ public class RunResultsCollector implements Serializable {
 					+ "_predictions", attInfo, 0);
 			
 			run = new Run(t.getTask_id(), implementation, options);
+			this.implementation = implementation;
 		}
 
 		public void addBatch(int fold, int repeat, Integer[] rowids,
@@ -85,7 +88,7 @@ public class RunResultsCollector implements Serializable {
 				double[] values = new double[predictions.numAttributes()];
 				values[predictions.attribute("row_id").index()] = rowids[i];
 				values[predictions.attribute("fold").index()] = fold;
-				values[predictions.attribute("repeat").index()] = repeat;
+				values[predictions.attribute("repeat").index()] = repeat - 1; // 1-based => 0-based
 				values[predictions.attribute("prediction").index()] = current.predicted();
 				if(current instanceof NominalPrediction) {
 					double[] confidences = ((NominalPrediction) current).distribution();
@@ -96,6 +99,10 @@ public class RunResultsCollector implements Serializable {
 				
 				predictions.add(new Instance(1.0D, values));
 			}
+		}
+		
+		public String getImplementation() {
+			return implementation;
 		}
 		
 		public Run getRun() {

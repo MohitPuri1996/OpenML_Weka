@@ -12,25 +12,25 @@ import java.util.Observer;
 
 import javax.swing.JFrame;
 
-import com.thoughtworks.xstream.XStream;
-
 import openml.algorithms.Conversion;
 import openml.gui.AuthenticateDialog;
 import openml.io.RunResultsCollector.OpenmlExecutedTask;
 import openml.xml.UploadRun;
 import openml.xstream.XstreamXmlMapping;
 
+import com.thoughtworks.xstream.XStream;
+
 public class RunResultsSubmitter implements Observer, Serializable {
 
 	private static final long serialVersionUID = 8129374529493626L;
 	private ApiSessionHash ash;
 	private List<OpenmlExecutedTask> queue;
-	private boolean dialogOpened;
+	private boolean authDialogOpened;
 
 	public RunResultsSubmitter() {
 		ash = new ApiSessionHash();
 		queue = new ArrayList<OpenmlExecutedTask>();
-		dialogOpened = false;
+		authDialogOpened = false;
 	}
 
 	public void acceptResult(OpenmlExecutedTask oet) {
@@ -43,7 +43,7 @@ public class RunResultsSubmitter implements Observer, Serializable {
 	public void update(Observable arg0, Object arg1) {
 		if (arg0 instanceof ApiSessionHash) {
 
-			dialogOpened = false;
+			authDialogOpened = false;
 			if (queue.size() > 0)
 				sendTask();
 
@@ -70,6 +70,11 @@ public class RunResultsSubmitter implements Observer, Serializable {
 			} catch (IOException e) {
 				e.printStackTrace();
 			} catch (Exception e) {
+				if (e.getMessage().length() >= 12) {
+					if (e.getMessage().substring(0, 12).equals("ApiError 205")) {
+						System.out.println("Unknown implementation! ");
+					}
+				}
 				e.printStackTrace();
 				queue.remove(0);
 			}
@@ -77,11 +82,11 @@ public class RunResultsSubmitter implements Observer, Serializable {
 			if (queue.size() > 0)
 				sendTask();
 		} else {
-			if (dialogOpened == false) {
+			if (authDialogOpened == false) {
 				AuthenticateDialog ad = new AuthenticateDialog(new JFrame(),
 						ash);
 				ad.setVisible(true);
-				dialogOpened = true;
+				authDialogOpened = true;
 			}
 		}
 	}

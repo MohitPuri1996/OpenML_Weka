@@ -1,10 +1,12 @@
 package openml.xml;
 
+import org.apache.commons.lang3.ArrayUtils;
+
 import openml.constants.Constants;
 
 public class Implementation {
 	private final String oml = Constants.OPENML_XMLNS;
-	
+
 	private String name;
 	private String version;
 	private String description;
@@ -16,18 +18,18 @@ public class Implementation {
 	private String installation_notes;
 	private String dependencies;
 	private Bibliographical_reference[] bibliographical_reference;
-	private Parameter parameter;
+	private Parameter[] parameter;
 	private String source_format;
 	private String binary_format;
 	private String source_md5;
 	private String binary_md5;
-	
-	public Implementation( String name, String version, String description ) {
+
+	public Implementation(String name, String version, String description) {
 		this.name = name;
 		this.version = version;
 		this.description = description;
 	}
-	
+
 	public Implementation(String name, String version, String description,
 			String[] creator, String[] contributor, String licence,
 			String language, String full_description,
@@ -44,8 +46,6 @@ public class Implementation {
 		this.installation_notes = installation_notes;
 		this.dependencies = dependencies;
 	}
-
-
 
 	public String getName() {
 		return name;
@@ -91,7 +91,7 @@ public class Implementation {
 		return bibliographical_reference;
 	}
 
-	public Parameter getParameter() {
+	public Parameter[] getParameter() {
 		return parameter;
 	}
 
@@ -114,34 +114,56 @@ public class Implementation {
 	public String getOml() {
 		return oml;
 	}
+	
+	public void addParameter(String name, String data_type, String default_value, String description) {
+		Parameter p = new Parameter(name, data_type, default_value, description);
+		this.parameter = ArrayUtils.addAll(this.parameter,p );
+	}
 
-	public class Bibliographical_reference {
+	public static class Bibliographical_reference {
 		private String citation;
 		private String url;
-		
+
+		public Bibliographical_reference(String citation, String url) {
+			this.citation = citation;
+			this.url = url;
+		}
+
 		public String getCitation() {
 			return citation;
 		}
+
 		public String getUrl() {
 			return url;
 		}
 	}
-	
-	public class Parameter {
+
+	public static class Parameter {
 		private String name;
 		private String data_type;
 		private String default_value;
 		private String description;
-		
+
+		public Parameter(String name, String data_type, String default_value,
+				String description) {
+			this.name = name;
+			this.data_type = data_type;
+			this.default_value = default_value;
+			this.description = description;
+		}
+
 		public String getName() {
 			return name;
 		}
+
 		public String getData_type() {
 			return data_type;
 		}
+
 		public String getDefault_value() {
 			return default_value;
 		}
+
 		public String getDescription() {
 			return description;
 		}

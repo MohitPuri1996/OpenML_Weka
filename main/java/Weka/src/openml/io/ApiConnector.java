@@ -16,6 +16,7 @@ import openml.constants.Settings;
 import openml.xml.ApiError;
 import openml.xml.Authenticate;
 import openml.xml.DataSetDescription;
+import openml.xml.Implementation;
 import openml.xml.Task;
 import openml.xml.UploadDataSet;
 import openml.xml.UploadImplementation;
@@ -63,6 +64,15 @@ public class ApiConnector {
         	return (DataSetDescription) apiResult;
         } else {
         	throw new DataFormatException("Casting Api Object to DataSetDescription");
+        }
+	}
+	
+	public static Implementation openmlImplementationGet(String implementation_id) throws Exception {
+		Object apiResult = doApiRequest("openml.implementation.get", "&implementation_id=" + implementation_id );
+        if( apiResult instanceof Task){
+        	return (Implementation) apiResult;
+        } else {
+        	throw new DataFormatException("Casting Api Object to Implementation");
         }
 	}
 	
@@ -147,9 +157,9 @@ public class ApiConnector {
             
             HttpResponse response = httpclient.execute(httppost);
             HttpEntity resEntity = response.getEntity();
-            
             if (resEntity != null) {
             	result = httpEntitiToString(resEntity);
+                System.out.println(result + "\n--------------------------------");
             } else {
             	throw new Exception("An exception has occured while reading data input stream. ");
             }

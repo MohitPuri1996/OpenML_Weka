@@ -14,6 +14,7 @@ public class Run {
 		this.implementation_id = implementation_id;
 		
 		// TODO: We must do something better than this. 
+		System.out.println("receiving: " + parameters);
 		String[] parts = parameters.split(" ");
 		parameter_settings = new Parameter_setting[parts.length/2];
 		for(int i = 1; i < parts.length; ++i) {
