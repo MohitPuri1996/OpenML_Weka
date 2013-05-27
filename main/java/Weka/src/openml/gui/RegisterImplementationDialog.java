@@ -109,7 +109,6 @@ public class RegisterImplementationDialog extends JDialog implements Observer {
 		this.binaryFile = binaryFile;
 		this.parent = parent;
 		this.apiSessionHash = apiSessionHash;
-		apiSessionHash.addObserver(this);
 		
 		add(getContents());
 		setResizable(false);
@@ -123,7 +122,6 @@ public class RegisterImplementationDialog extends JDialog implements Observer {
 		this.binaryFile = null;
 		this.parent = parent;
 		this.apiSessionHash = apiSessionHash;
-		apiSessionHash.addObserver(this);
 		
 		add(getContents());
 		setResizable(false);

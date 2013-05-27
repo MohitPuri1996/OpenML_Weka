@@ -97,7 +97,6 @@ public class RegisterDatasetDialog extends JDialog implements Observer {
 		this.dataset = dataset;
 		this.parent = parent;
 		this.apiSessionHash = apiSessionHash;
-		apiSessionHash.addObserver(this);
 		
 		add(getContents());
 		setResizable(false);

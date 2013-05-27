@@ -1,5 +1,6 @@
 package openml.xml;
 
+import openml.algorithms.OptionParser;
 import openml.constants.Constants;
 
 public class Run {
@@ -13,13 +14,7 @@ public class Run {
 		this.task_id = task_id;
 		this.implementation_id = implementation_id;
 		
-		// TODO: We must do something better than this. 
-		System.out.println("receiving: " + parameters);
-		String[] parts = parameters.split(" ");
-		parameter_settings = new Parameter_setting[parts.length/2];
-		for(int i = 1; i < parts.length; ++i) {
-			parameter_settings[i/2] = new Parameter_setting(parts[i-1], parts[i], implementation_id);
-		}
+		parameter_settings = OptionParser.parseParameters(implementation_id, parameters);
 	}
 	
 	public String getOml() {
@@ -33,13 +28,17 @@ public class Run {
 	public String getImplementation_id() {
 		return implementation_id;
 	}
+	
+	public Parameter_setting[] getParameter_settings() {
+		return parameter_settings;
+	}
 
 	public static class Parameter_setting {
 		private String name;
 		private String value;
 		private String component;
 		
-		public Parameter_setting(String name, String value, String component) {
+		public Parameter_setting(String component, String name, String value) {
 			this.name = name;
 			this.component = component;
 			this.value = value;
@@ -53,6 +52,11 @@ public class Run {
 		}
 		public String getValue() {
 			return value;
+		}
+		
+		@Override
+		public String toString() {
+			return component + "_" + name + ": " + value;
 		}
 	}
 }

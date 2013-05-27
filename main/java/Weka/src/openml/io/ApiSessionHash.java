@@ -3,14 +3,15 @@ package openml.io;
 import java.io.Serializable;
 import java.text.ParseException;
 import java.util.Date;
-import java.util.Observable;
 
 import openml.algorithms.DateParser;
+import openml.xml.Authenticate;
 
-public class ApiSessionHash extends Observable implements Serializable {
+public class ApiSessionHash implements Serializable {
 	
 	private static final long serialVersionUID = 7831245113631L;
 	private String username;
+	private String password;
 	private String sessionHash;
 	private long validUntil;
 	
@@ -24,17 +25,22 @@ public class ApiSessionHash extends Observable implements Serializable {
 		return validUntil > utilDate.getTime();
 	}
 	
-	public void set( String username, String hash, String validUntil ) throws ParseException {
+	public boolean set( String username, String password ) throws ParseException {
 		this.username = username;
-		this.sessionHash = hash;
-		this.validUntil = DateParser.mysqlDateToTimeStamp(validUntil);
-		setChanged();
-		notifyObservers(true);
+		this.password = password;
+		
+		return update();
 	}
 	
-	public void failed() {
-		setChanged();
-		notifyObservers(false);
+	public boolean update() {
+		try {
+			Authenticate auth = ApiConnector.openmlAuthenticate(username, password);
+			this.validUntil = DateParser.mysqlDateToTimeStamp(auth.getValidUntil());
+			this.sessionHash = auth.getSessionHash();
+			return true;
+		} catch (Exception e) {
+			return false;
+		}
 	}
 
 	public String getUsername() {

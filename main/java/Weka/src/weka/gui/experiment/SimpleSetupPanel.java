@@ -77,7 +77,10 @@ import javax.swing.filechooser.FileFilter;
 import openml.constants.Constants;
 import openml.experiment.TaskResultListener;
 import openml.experiment.TaskResultProducer;
+import openml.gui.AuthenticateDialog;
 import openml.gui.TaskListPanel;
+import openml.gui.UsernameDialog;
+import openml.io.ApiSessionHash;
 
 /** 
  * This panel controls the configuration of an experiment.
@@ -347,6 +350,8 @@ public class SimpleSetupPanel
 	  //using this button for both browsing file & setting username/password
 	  if (m_ResultsDestinationCBox.getSelectedItem() == DEST_DATABASE_TEXT){
 	    chooseURLUsername();
+	  } else if(m_ResultsDestinationCBox.getSelectedItem() == DEST_OPENML_TEXT) {
+		  chooseUsernamePassword();
 	  } else {
 	    chooseDestinationFile();
 	  }
@@ -923,8 +928,11 @@ public class SimpleSetupPanel
       m_ResultsDestinationPathTField.setEnabled(true);
       m_BrowseDestinationButton.setText(Messages.getInstance().getString("SimpleSetupPanel_DestinationTypeChanged_DEST_DATABASE_TEXT_BrowseDestinationButton_Text"));
     } else if(m_ResultsDestinationCBox.getSelectedItem() == DEST_OPENML_TEXT) {
-      m_BrowseDestinationButton.setEnabled(false);
+      m_BrowseDestinationButton.setEnabled(true);
       m_ResultsDestinationPathTField.setEnabled(false);
+      
+      m_ResultsDestinationPathLabel.setText("OpenML Username: ");
+      m_BrowseDestinationButton.setText("Login");
       m_ExperimentTypeCBox.setSelectedItem(TYPE_OPENML_TASK_TEXT);
     } else {
       m_ResultsDestinationPathLabel.setText(Messages.getInstance().getString("SimpleSetupPanel_DestinationTypeChanged_DEST_DATABASE_TEXT_ResultsDestinationPathLabel_Text_Second"));
@@ -1256,6 +1264,26 @@ public class SimpleSetupPanel
     ((DatabaseResultListener)m_Exp.getResultListener()).setDebug(dbd.getDebug());
     m_ResultsDestinationPathTField.setText(dbd.getURL());
   }
+  
+  private void chooseUsernamePassword() {
+	UsernameDialog ad = new UsernameDialog(null);
+	ad.setVisible(true);
+      
+    //if (dbaseURL == null) {
+    if (ad.getReturnValue()==JOptionPane.CLOSED_OPTION) {
+      return;
+    }
+    if(((TaskResultProducer)m_Exp.getResultProducer()).acceptCredentials(ad.getUsername(), ad.getPassword())) {
+    	m_ResultsDestinationPathTField.setText(ad.getUsername());
+    } else {
+    	JOptionPane.showMessageDialog(null,
+    			"Username/Password incorrect",
+    			"Error",
+    			JOptionPane.ERROR_MESSAGE);
+    }
+    
+  }
+  
   /**
    * Lets user browse for a destination file..
    */

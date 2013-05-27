@@ -100,7 +100,7 @@ public class AuthenticateDialog extends JDialog {
 		
 		submit.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent a) {
-				try {
+				/*try {
 					Authenticate auth = ApiConnector.openmlAuthenticate(textComponent[0].getText(),textComponent[1].getText());
 					sessionHash.set(null, auth.getSessionHash(), auth.getValidUntil());
 					
@@ -116,7 +116,7 @@ public class AuthenticateDialog extends JDialog {
 						Authenticate auth = (Authenticate) xml;
 						sessionHash.set(null, auth.getSessionHash(), auth.getValidUntil());
 					}*/
-				} catch (IOException e) {
+				/*} catch (IOException e) {
 					JOptionPane.showMessageDialog(parent,
 							"An unexpected IO Exception has occured. ",
 						    "Error",
@@ -136,11 +136,10 @@ public class AuthenticateDialog extends JDialog {
 							e.getMessage(),
 						    "Error",
 						    JOptionPane.ERROR_MESSAGE);
-					sessionHash.failed();
 				} 
 				
 				setVisible(false);
-				dispose();
+				dispose();*/
 			}
 		});
 

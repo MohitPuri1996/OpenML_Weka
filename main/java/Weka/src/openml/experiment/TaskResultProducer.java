@@ -1,6 +1,6 @@
 package openml.experiment;
 
-import java.util.ArrayList;
+import java.text.ParseException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -9,6 +9,7 @@ import org.apache.commons.lang3.ArrayUtils;
 import openml.algorithms.InstancesHelper;
 import openml.algorithms.TaskInformation;
 import openml.io.ApiConnector;
+import openml.io.ApiSessionHash;
 import openml.io.RunResultsCollector;
 import openml.io.RunResultsSubmitter;
 import openml.xml.DataSetDescription;
@@ -42,6 +43,22 @@ public class TaskResultProducer extends CrossValidationResultProducer {
 
 	/** Sending results to server */
 	protected RunResultsSubmitter m_ResultsSubmitter;
+	
+	/** Credentials for sending results to server */
+	private ApiSessionHash ash;
+	
+	public boolean acceptCredentials(String username, String password) {
+		ash = new ApiSessionHash();
+		try {
+			boolean succes = ash.set(username, password);
+			if(succes)
+				m_ResultsSubmitter.acceptSessionHash(ash);
+			return succes;
+		} catch (ParseException e) {
+			e.printStackTrace();
+			return false;
+		}
+	}
 
 	public TaskResultProducer() {
 		super();

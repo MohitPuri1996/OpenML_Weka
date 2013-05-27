@@ -1,7 +1,6 @@
 package openml.io;
 
 import java.io.Serializable;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -39,7 +38,7 @@ public class RunResultsCollector implements Serializable {
 		currentlyCollecting.get(key).addBatch(fold, repeat, rowids, predictions);
 		
 		if(currentlyCollecting.get(key).complete()) {
-			rrs.acceptResult(currentlyCollecting.get(key));
+			rrs.sendTask(currentlyCollecting.get(key));
 			currentlyCollecting.remove(key);
 		}
 	}

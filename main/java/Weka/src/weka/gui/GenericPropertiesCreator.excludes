@@ -25,6 +25,22 @@ weka.classifiers.bayes.net.search.SearchAlgorithm=\
   C:weka.classifiers.bayes.net.search.global.GlobalScoreSearchAlgorithm,\
   C:weka.classifiers.bayes.net.search.ci.CIScoreSearchAlgorithm
 
+weka.classifiers.Classifier=\
+	C:weka.classifiers.bayes.BayesNet,\
+	C:weka.classifiers.functions.SMO,\
+	C:weka.classifiers.functions.SMOreg,\
+	C:weka.classifiers.functions.PLSClassifier,\
+	C:weka.classifiers.functions.GaussianProcesses,\
+	C:weka.classifiers.lazy.IBk,\
+	C:weka.classifiers.lazy.LWL,\
+	C:weka.classifiers.mi.MIBoost,\
+	C:weka.classifiers.mi.MISMO,\
+	C:weka.classifiers.mi.MISVM,\
+	C:weka.classifiers.mi.MIWrapper,\
+	C:weka.classifiers.mi.SimpleMI,\
+	C:weka.classifiers.rules.DecisionTable,\
+	C:weka.classifiers.rules.DTNB
+
 # SVMreg learning algorithms
 weka.classifiers.functions.supportVector.RegOptimizer=\
  C:weka.classifiers.functions.supportVector.RegOptimizer
