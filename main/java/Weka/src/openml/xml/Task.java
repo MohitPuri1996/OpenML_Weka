@@ -1,15 +1,41 @@
 package openml.xml;
 
-import openml.constants.Constants;
-import openml.io.ApiConnector;
+import java.io.IOException;
+import java.io.Serializable;
 
-public class Task {
+import openml.constants.Constants;
+import openml.constants.Settings;
+import openml.io.ApiConnector;
+import weka.core.Instances;
+
+public class Task implements Serializable {
+	private static final long serialVersionUID = 987612341009L;
+
 	private final String oml = Constants.OPENML_XMLNS;
 	
 	private Integer task_id;
 	private String task_type;
 	private Input[] inputs;
 	private Output[] outputs;
+	
+	// for quick initialization. 
+	public Task(int id) {
+		this.task_id = id;
+	}
+	
+	@Override
+	public String toString() {
+		return Settings.BASE_URL + "api/?f=openml.tasks.search&task_id=" + getTask_id();
+	}
+	
+	@Override
+	public boolean equals(Object other) {
+		if(other instanceof Task) {
+			if( ((Task)other).getTask_id() == getTask_id() )
+				return true;
+		}
+		return false;
+	}
 	
 	public String getOml() {
 		return oml;
@@ -31,7 +57,8 @@ public class Task {
 		return outputs;
 	}
 
-	public class Input {
+	public class Input implements Serializable {
+		private static final long serialVersionUID = 987612341019L;
 		private String name;
 		private Data_set data_set;
 		private Estimation_procedure estimation_procedure;
@@ -53,7 +80,8 @@ public class Task {
 			return evaluation_measures;
 		}
 		
-		public class Data_set {
+		public class Data_set implements Serializable {
+			private static final long serialVersionUID = 987612341029L;
 			private Integer data_set_id;
 			private String target_feature;
 			private DataSetDescription dsdCache;
@@ -72,10 +100,12 @@ public class Task {
 			}
 		}
 		
-		public class Estimation_procedure {
+		public class Estimation_procedure implements Serializable {
+			private static final long serialVersionUID = 987612341039L;
 			private String type;
 			private String data_splits_url;
 			private Parameter[] parameters;
+			private Instances dsCache;
 			
 			public String getType() {
 				return type;
@@ -88,8 +118,16 @@ public class Task {
 			public Parameter[] getParameters() {
 				return parameters;
 			}
+			
+			public Instances getData_splits() throws IOException {
+				if(dsCache == null) {
+					dsCache = ApiConnector.getDatasetFromUrl(data_splits_url);
+				}
+				return dsCache;
+			}
 
-			public class Parameter {
+			public class Parameter implements Serializable {
+				private static final long serialVersionUID = 987612341099L;
 				private String name;
 				private String value;
 				
@@ -102,7 +140,8 @@ public class Task {
 			}
 		}
 		
-		public class Evaluation_measures {
+		public class Evaluation_measures implements Serializable {
+			private static final long serialVersionUID = 987612341049L;
 			private String[] evaluation_measure;
 
 			public String[] getEvaluation_measure() {
@@ -111,7 +150,8 @@ public class Task {
 		}
 	}
 	
-	public class Output {
+	public class Output implements Serializable {
+		private static final long serialVersionUID = 987612341059L;
 		private String name;
 		private Predictions predictions;
 		
@@ -123,7 +163,8 @@ public class Task {
 			return predictions;
 		}
 		
-		public class Predictions {
+		public class Predictions implements Serializable {
+			private static final long serialVersionUID = 987612341069L;
 			private String format;
 			private Feature[] features;
 			
@@ -135,7 +176,8 @@ public class Task {
 				return features;
 			}
 
-			public class Feature {
+			public class Feature implements Serializable {
+				private static final long serialVersionUID = 987612341079L;
 				private String name;
 				private String type;
 				

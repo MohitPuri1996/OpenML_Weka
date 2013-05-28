@@ -1,13 +1,15 @@
 package openml.xml;
 
 import java.io.IOException;
+import java.io.Serializable;
 
 import openml.constants.Constants;
 import openml.io.ApiConnector;
 import weka.core.Instances;
 
 
-public class DataSetDescription {
+public class DataSetDescription implements Serializable {
+	private static final long serialVersionUID = 987612341129L;
 	private final String oml = Constants.OPENML_XMLNS;
 	
 	private Integer id;

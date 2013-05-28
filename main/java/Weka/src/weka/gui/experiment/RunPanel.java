@@ -47,7 +47,10 @@ import java.io.Serializable;
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JFrame;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+
+import openml.experiment.TaskResultListener;
 
 /** 
  * This panel controls the running of an experiment.
@@ -298,6 +301,7 @@ public class RunPanel
   public void actionPerformed(ActionEvent e) {
 
     if (e.getSource() == m_StartBut) {
+      if(canStartTest() == false )return; 
       if (m_RunThread == null) {
         boolean proceed = true;
         if (Experimenter.m_Memory.memoryIsLow()) {
@@ -346,6 +350,19 @@ public class RunPanel
     
     m_Log.statusMessage(message);
   }
+  
+  protected boolean canStartTest() {
+	if(m_Exp.getResultListener() instanceof TaskResultListener) {
+		if(m_Exp.getResultListener() instanceof TaskResultListener) {
+			if(((TaskResultListener)m_Exp.getResultListener()).gotCredentials() == false) {
+				JOptionPane.showMessageDialog(null,"Please login first (setup tab), in order to send the results to OpenML.org.","Login error",JOptionPane.ERROR_MESSAGE);
+	      		return false;
+			}
+		}
+	}
+	return true;
+  }
+  
   
   /**
    * Tests out the run panel from the command line.

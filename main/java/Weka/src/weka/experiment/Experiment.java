@@ -204,7 +204,7 @@ public class Experiment
   protected boolean m_AdvanceDataSetFirst = true;
   
   /** An array of the Tasks to be executed */
-  protected DefaultListModel<Integer> m_Tasks = new DefaultListModel<Integer>();
+  protected DefaultListModel<Task> m_Tasks = new DefaultListModel<Task>();
 
   /**
    * boolean to specify whether this is a plain dataset based experiment, or
@@ -385,7 +385,7 @@ public class Experiment
 	  return datasetBasedExperiment;
   }
 
-  public DefaultListModel<Integer> getTasks() {
+  public DefaultListModel<Task> getTasks() {
 	return m_Tasks;
   }
   
@@ -587,7 +587,7 @@ public class Experiment
   private void nextIterationTaskBased() throws Exception {
 	  if(m_CurrentTask == null) {
 			TaskResultProducer trp = (TaskResultProducer) m_ResultProducer;
-		  	m_CurrentTask = ApiConnector.openmlTasksSearch( getTasks().elementAt(m_DatasetNumber) );
+		  	m_CurrentTask = getTasks().elementAt(m_DatasetNumber);
 		  	this.setRunUpper(TaskInformation.getNumberOfRepeats(m_CurrentTask));
 			trp.setTask(m_CurrentTask);
 		}
@@ -697,7 +697,7 @@ public class Experiment
    * @return the result listener where results will be sent.
    */
   public ResultListener getResultListener() {
-    
+	
     return m_ResultListener;
   }
   
@@ -707,7 +707,6 @@ public class Experiment
    * @param newResultListener the result listener where results will be sent.
    */
   public void setResultListener(ResultListener newResultListener) {
-    
     m_ResultListener = newResultListener;
   }
   

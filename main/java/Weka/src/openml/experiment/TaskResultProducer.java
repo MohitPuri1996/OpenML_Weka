@@ -1,6 +1,5 @@
 package openml.experiment;
 
-import java.text.ParseException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -8,10 +7,6 @@ import org.apache.commons.lang3.ArrayUtils;
 
 import openml.algorithms.InstancesHelper;
 import openml.algorithms.TaskInformation;
-import openml.io.ApiConnector;
-import openml.io.ApiSessionHash;
-import openml.io.RunResultsCollector;
-import openml.io.RunResultsSubmitter;
 import openml.xml.DataSetDescription;
 import openml.xml.Task;
 import openml.xml.Task.Input.Data_set;
@@ -36,36 +31,10 @@ public class TaskResultProducer extends CrossValidationResultProducer {
 
 	/** Instances file with splits in it **/
 	protected Instances m_Splits;
-	
-	/** Collecting results before sending to server */
-	protected RunResultsCollector m_ResultsCollector;
-	
-
-	/** Sending results to server */
-	protected RunResultsSubmitter m_ResultsSubmitter;
-	
-	/** Credentials for sending results to server */
-	private ApiSessionHash ash;
-	
-	public boolean acceptCredentials(String username, String password) {
-		ash = new ApiSessionHash();
-		try {
-			boolean succes = ash.set(username, password);
-			if(succes)
-				m_ResultsSubmitter.acceptSessionHash(ash);
-			return succes;
-		} catch (ParseException e) {
-			e.printStackTrace();
-			return false;
-		}
-	}
 
 	public TaskResultProducer() {
 		super();
-		
 		m_SplitEvaluator = new TaskSplitEvaluator();
-		m_ResultsSubmitter = new RunResultsSubmitter();
-		m_ResultsCollector = new RunResultsCollector(m_ResultsSubmitter);
 	}
 
 	public void setTask(Task t) throws Exception {
@@ -78,7 +47,7 @@ public class TaskResultProducer extends CrossValidationResultProducer {
 		DataSetDescription dsd = ds.getDataSetDescription();
 		m_Instances = dsd.getDataset();
 		InstancesHelper.setTargetAttribute(m_Instances, ds.getTarget_feature());
-		m_Splits = ApiConnector.getDatasetFromUrl(ep.getData_splits_url());
+		m_Splits = ep.getData_splits();
 	}
 
 	/**
@@ -199,7 +168,7 @@ public class TaskResultProducer extends CrossValidationResultProducer {
 					// TODO: do a better check
 					if(m_ResultListener instanceof TaskResultListener)
 						// TODO: do better than just key[4], key[5] and key[6]
-						m_ResultsCollector.acceptResults(m_Task, run, fold, (String) key[4], (String) key[5], (String) key[6], rowids.get(fold), ((TaskSplitEvaluator) m_SplitEvaluator).recentPredictions());
+						((TaskResultListener)m_ResultListener).acceptResultsForSending(m_Task, run, fold, (String) key[4], (String) key[5], (String) key[6], rowids.get(fold), ((TaskSplitEvaluator) m_SplitEvaluator).recentPredictions());
 				} catch (Exception ex) {
 					// Save the train and test datasets for debugging purposes?
 					throw ex;

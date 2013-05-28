@@ -77,10 +77,8 @@ import javax.swing.filechooser.FileFilter;
 import openml.constants.Constants;
 import openml.experiment.TaskResultListener;
 import openml.experiment.TaskResultProducer;
-import openml.gui.AuthenticateDialog;
 import openml.gui.TaskListPanel;
 import openml.gui.UsernameDialog;
-import openml.io.ApiSessionHash;
 
 /** 
  * This panel controls the configuration of an experiment.
@@ -998,6 +996,7 @@ public class SimpleSetupPanel
           e.printStackTrace();
         }
         m_Exp.setResultListener(trl);
+        
       }
     }
 
@@ -1018,7 +1017,7 @@ public class SimpleSetupPanel
       if (m_Exp.getResultListener() instanceof DatabaseResultListener) {
 	((DatabaseResultListener)m_Exp.getResultListener()).setDatabaseURL(m_destinationDatabaseURL);
       }
-    } else {
+    } else if (m_ResultsDestinationCBox.getSelectedItem() != DEST_OPENML_TEXT) {
       File resultsFile = null;
       m_destinationFilename = m_ResultsDestinationPathTField.getText();
 
@@ -1273,12 +1272,12 @@ public class SimpleSetupPanel
     if (ad.getReturnValue()==JOptionPane.CLOSED_OPTION) {
       return;
     }
-    if(((TaskResultProducer)m_Exp.getResultProducer()).acceptCredentials(ad.getUsername(), ad.getPassword())) {
+    if(((TaskResultListener)m_Exp.getResultListener()).acceptCredentials(ad.getUsername(), ad.getPassword())) {
     	m_ResultsDestinationPathTField.setText(ad.getUsername());
     } else {
     	JOptionPane.showMessageDialog(null,
     			"Username/Password incorrect",
-    			"Error",
+    			"Login error",
     			JOptionPane.ERROR_MESSAGE);
     }
     

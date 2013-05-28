@@ -5,6 +5,7 @@ import java.lang.reflect.Array;
 import javax.swing.DefaultListModel;
 
 import openml.algorithms.InstancesHelper;
+import openml.algorithms.TaskInformation;
 import openml.io.ApiConnector;
 import openml.xml.ApiError;
 import openml.xml.DataSetDescription;
@@ -19,7 +20,7 @@ public class TaskBasedExperiment extends Experiment {
 	private static final long serialVersionUID = 1L;
 
 	/** An array of the Tasks to be executed */
-	protected DefaultListModel<Integer> m_Tasks = new DefaultListModel<Integer>();
+	protected DefaultListModel<Task> m_Tasks = new DefaultListModel<Task>();
 
 	/**
 	 * boolean to specify whether this is a plain dataset based experiment, or
@@ -49,7 +50,7 @@ public class TaskBasedExperiment extends Experiment {
 		this.datasetBasedExperiment = datasetBasedExperiment;
 	}
 
-	public DefaultListModel<Integer> getTasks() {
+	public DefaultListModel<Task> getTasks() {
 		return m_Tasks;
 	}
 
@@ -81,15 +82,10 @@ public class TaskBasedExperiment extends Experiment {
 		}
 		
 		if(m_CurrentTask == null) {
-			Object objTask = ApiConnector.openmlTasksSearch( getTasks().elementAt(m_DatasetNumber) );
-			if(objTask instanceof ApiError) {
-				throw new Exception("An error has occured while getting task " + getTasks().elementAt(m_DatasetNumber) );
-			}
-			m_CurrentTask = (Task) objTask;
+			m_CurrentTask = getTasks().elementAt(m_DatasetNumber);
 			
-			Data_set ds = m_CurrentTask.getInputs()[0].getData_set();
-			DataSetDescription dsd = ApiConnector.openmlDataDescription(ds.getData_set_id());
-			Instances instDataset = ApiConnector.getDatasetFromUrl(dsd.getUrl());
+			Data_set ds = TaskInformation.getSourceData(m_CurrentTask);
+			Instances instDataset = TaskInformation.getSourceData(m_CurrentTask).getDataSetDescription().getDataset();
 			InstancesHelper.setTargetAttribute(instDataset, ds.getTarget_feature());
 			
 			m_ResultProducer.setInstances(instDataset);

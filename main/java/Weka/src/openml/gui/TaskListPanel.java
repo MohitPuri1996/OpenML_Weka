@@ -11,6 +11,9 @@ import javax.swing.JOptionPane;
 import javax.swing.event.ListSelectionEvent;
 
 import openml.algorithms.Conversion;
+import openml.algorithms.TaskInformation;
+import openml.io.ApiConnector;
+import openml.xml.Task;
 import weka.core.Utils;
 import weka.core.ClassDiscovery.StringCompare;
 import weka.core.converters.ConverterUtils;
@@ -275,8 +278,27 @@ public class TaskListPanel extends DatasetListPanel {
 		try {
 			int[] input_task_ids = Conversion.commaSeperatedStringToIntArray(s);
 			for (int i = 0; i < input_task_ids.length; ++i) {
-				if (m_Exp.getTasks().contains(input_task_ids[i]) == false) {
-					m_Exp.getTasks().addElement(input_task_ids[i]);
+				if (m_Exp.getTasks().contains(new Task(input_task_ids[i])) == false) {
+					try {
+						Task t = ApiConnector
+								.openmlTasksSearch(input_task_ids[i]);
+						// download all data necessary for task execution
+						TaskInformation.getEstimationProcedure(t)
+								.getData_splits();
+						TaskInformation.getSourceData(t)
+								.getDataSetDescription().getDataset();
+
+						m_Exp.getTasks().addElement(t);
+					} catch (Exception downloadException) {
+						JOptionPane
+								.showMessageDialog(
+										this,
+										"There occured an error while downloading (the data of) Task "
+												+ input_task_ids[i]
+												+ ". Please double check whether this is a legal task id. Otherwise some input data might be missing. ",
+										"Task download error",
+										JOptionPane.ERROR_MESSAGE);
+					}
 				}
 			}
 		} catch (NumberFormatException nfe) {
