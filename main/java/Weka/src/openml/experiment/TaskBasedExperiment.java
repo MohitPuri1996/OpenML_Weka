@@ -6,9 +6,6 @@ import javax.swing.DefaultListModel;
 
 import openml.algorithms.InstancesHelper;
 import openml.algorithms.TaskInformation;
-import openml.io.ApiConnector;
-import openml.xml.ApiError;
-import openml.xml.DataSetDescription;
 import openml.xml.Task;
 import openml.xml.Task.Input.Data_set;
 

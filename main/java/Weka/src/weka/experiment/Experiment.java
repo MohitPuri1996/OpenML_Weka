@@ -56,7 +56,6 @@ import javax.swing.DefaultListModel;
 
 import openml.algorithms.TaskInformation;
 import openml.experiment.TaskResultProducer;
-import openml.io.ApiConnector;
 import openml.xml.Task;
 
 /**

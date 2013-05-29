@@ -159,13 +159,13 @@ public class ApiConnector {
             HttpEntity resEntity = response.getEntity();
             if (resEntity != null) {
             	result = httpEntitiToString(resEntity);
-                System.out.println(result + "\n--------------------------------");
             } else {
             	throw new Exception("An exception has occured while reading data input stream. ");
             }
 		} finally {
             try { httpclient.getConnectionManager().shutdown(); } catch (Exception ignore) {}
         }
+		System.out.println(result);
 		Object apiResult = xstream.fromXML(result);
 		if(apiResult instanceof ApiError) {
 			ApiError apiError = (ApiError) apiResult;

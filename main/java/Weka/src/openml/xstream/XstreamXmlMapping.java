@@ -123,6 +123,7 @@ public class XstreamXmlMapping {
 		
 		xstream.aliasField("oml:task_id", Run.class, "task_id");
 		xstream.aliasField("oml:implementation_id", Run.class, "implementation_id");
+		xstream.aliasField("oml:error_message", Run.class, "error_message");
 		xstream.aliasField("oml:name", Run.Parameter_setting.class, "name");
 		xstream.aliasField("oml:component", Run.Parameter_setting.class, "component");
 		xstream.aliasField("oml:value", Run.Parameter_setting.class, "value");

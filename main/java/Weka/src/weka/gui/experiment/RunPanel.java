@@ -301,7 +301,7 @@ public class RunPanel
   public void actionPerformed(ActionEvent e) {
 
     if (e.getSource() == m_StartBut) {
-      if(canStartTest() == false )return; 
+      if(canStartExperiment() == false )return; 
       if (m_RunThread == null) {
         boolean proceed = true;
         if (Experimenter.m_Memory.memoryIsLow()) {
@@ -351,7 +351,7 @@ public class RunPanel
     m_Log.statusMessage(message);
   }
   
-  protected boolean canStartTest() {
+  protected boolean canStartExperiment() {
 	if(m_Exp.getResultListener() instanceof TaskResultListener) {
 		if(m_Exp.getResultListener() instanceof TaskResultListener) {
 			if(((TaskResultListener)m_Exp.getResultListener()).gotCredentials() == false) {

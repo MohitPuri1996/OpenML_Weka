@@ -13,6 +13,7 @@ import openml.xml.Task.Input.Data_set;
 import openml.xml.Task.Input.Estimation_procedure;
 
 import weka.core.Instances;
+import weka.core.UnsupportedAttributeTypeException;
 import weka.core.Utils;
 import weka.experiment.CrossValidationResultProducer;
 import weka.experiment.OutputZipper;
@@ -169,9 +170,10 @@ public class TaskResultProducer extends CrossValidationResultProducer {
 					if(m_ResultListener instanceof TaskResultListener)
 						// TODO: do better than just key[4], key[5] and key[6]
 						((TaskResultListener)m_ResultListener).acceptResultsForSending(m_Task, run, fold, (String) key[4], (String) key[5], (String) key[6], rowids.get(fold), ((TaskSplitEvaluator) m_SplitEvaluator).recentPredictions());
-				} catch (Exception ex) {
+				} catch (UnsupportedAttributeTypeException ex) {
 					// Save the train and test datasets for debugging purposes?
-					throw ex;
+					if(m_ResultListener instanceof TaskResultListener)
+						((TaskResultListener)m_ResultListener).acceptErrorResult(m_Task,(String) key[4], (String) key[5], ex.getMessage(), (String) key[6]);
 				}
 			}
 		}

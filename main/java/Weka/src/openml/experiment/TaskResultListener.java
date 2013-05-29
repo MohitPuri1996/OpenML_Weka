@@ -1,8 +1,8 @@
 package openml.experiment;
 
 import java.io.File;
-import java.io.IOException;
 import java.text.ParseException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -14,7 +14,6 @@ import openml.io.ApiConnector;
 import openml.io.ApiSessionHash;
 import openml.xml.Run;
 import openml.xml.Task;
-import openml.xml.UploadRun;
 import openml.xml.Task.Output.Predictions.Feature;
 import openml.xstream.XstreamXmlMapping;
 import weka.classifiers.evaluation.NominalPrediction;
@@ -28,23 +27,30 @@ import weka.experiment.InstancesResultListener;
 public class TaskResultListener extends InstancesResultListener {
 
 	private static final long serialVersionUID = 7230120341L;
-	
+
 	/** List of OpenML tasks currently being solved. Folds/repeats are gathered */
 	private final Map<String, OpenmlExecutedTask> currentlyCollecting;
-	
+
+	/**
+	 * List of OpenML tasks that reported back with errors. Will be send to
+	 * server with error message
+	 */
+	private final ArrayList<String> tasksWithErrors;
+
 	/** Credentials for sending results to server */
 	private ApiSessionHash ash;
-	
+
 	/** boolean checking whether correct credentials have been stored */
 	private boolean credentials = false;
-	
+
 	public TaskResultListener() {
 		super();
-		
+
 		currentlyCollecting = new HashMap<String, OpenmlExecutedTask>();
+		tasksWithErrors = new ArrayList<String>();
 		ash = null;
 	}
-	
+
 	public boolean acceptCredentials(String username, String password) {
 		ash = new ApiSessionHash();
 		try {
@@ -56,73 +62,89 @@ public class TaskResultListener extends InstancesResultListener {
 			return false;
 		}
 	}
-	
+
 	public boolean gotCredentials() {
 		return credentials;
 	}
 
 	public void acceptResultsForSending(Task t, Integer repeat, Integer fold,
-			String implementation, String version, String options, Integer[] rowids,
-			FastVector predictions) throws Exception {
+			String implementation, String version, String options,
+			Integer[] rowids, FastVector predictions) throws Exception {
 		String implementationId = implementation + "(" + version + ")";
 		String key = t.getTask_id() + "_" + implementationId + "_" + options;
-		if( currentlyCollecting.containsKey(key) == false)
-			currentlyCollecting.put(key, new OpenmlExecutedTask(t, implementationId, options) );
-		currentlyCollecting.get(key).addBatch(fold, repeat, rowids, predictions);
-		
-		if(currentlyCollecting.get(key).complete()) {
+		if (currentlyCollecting.containsKey(key) == false)
+			currentlyCollecting.put(key, new OpenmlExecutedTask(t,
+					implementationId, null, options));
+		currentlyCollecting.get(key)
+				.addBatch(fold, repeat, rowids, predictions);
+
+		if (currentlyCollecting.get(key).complete()) {
 			sendTask(currentlyCollecting.get(key));
 			currentlyCollecting.remove(key);
 		}
 	}
-	
-	public void sendTask(OpenmlExecutedTask oet) throws Exception {
-		if(ash == null) {
-			throw new Exception("No credentials provided yet. ");
-		}
-		if (ash.isValid() == false) {
-			ash.update();
-		}
-		
-		if(ash.isValid() == false ) {
-			throw new Exception("Credentials not valid. ");
-		}
-		
-		try {
-			XStream xstream = XstreamXmlMapping.getInstance();
-			File tmpPredictionsFile;
-			File tmpDescriptionFile;
-			tmpPredictionsFile = Conversion.instancesToTempFile(
-					oet.getPredictions(), "weka_generated_predictions");
-			tmpDescriptionFile = Conversion.stringToTempFile(
-					xstream.toXML(oet.getRun()), "weka_generated_run");
-			Map<String, File> output_files = new HashMap<String, File>();
-			output_files.put("predictions", tmpPredictionsFile);
-			UploadRun ur = ApiConnector.openmlRunUpload(tmpDescriptionFile,
-					output_files, ash.getSessionHash());
-			System.out.println(xstream.toXML(ur));
-		} catch (IOException e) {
-			e.printStackTrace();
-		} catch (Exception e) {
-			if (e.getMessage().length() >= 12) {
-				if (e.getMessage().substring(0, 12).equals("ApiError 205")) {
-					System.out.println("Unknown implementation! ");
-				}
-			}
-			e.printStackTrace();
+
+	public void acceptErrorResult(Task t, String implementation,
+			String version, String error_message, String options)
+			throws Exception {
+		String implementationId = implementation + "(" + version + ")";
+		String key = t.getTask_id() + "_" + implementationId + "_" + options;
+
+		if (tasksWithErrors.contains(key) == false) {
+			tasksWithErrors.add(key);
+			sendTaskWithError(new OpenmlExecutedTask(t, implementationId,
+					error_message, options));
 		}
 	}
 
-	public class OpenmlExecutedTask {
+	private void sendTask(OpenmlExecutedTask oet) throws Exception {
+		XStream xstream = XstreamXmlMapping.getInstance();
+		File tmpPredictionsFile;
+		File tmpDescriptionFile;
+		
+		ashUpdate();
+		
+		tmpPredictionsFile = Conversion.instancesToTempFile(
+				oet.getPredictions(), "weka_generated_predictions");
+		tmpDescriptionFile = Conversion.stringToTempFile(
+				xstream.toXML(oet.getRun()), "weka_generated_run");
+		Map<String, File> output_files = new HashMap<String, File>();
+		output_files.put("predictions", tmpPredictionsFile);
+		ApiConnector.openmlRunUpload(tmpDescriptionFile, output_files,
+				ash.getSessionHash());
+
+	}
+
+	private void sendTaskWithError(OpenmlExecutedTask oet) throws Exception {
+		XStream xstream = XstreamXmlMapping.getInstance();
+		File tmpDescriptionFile;
+		
+		ashUpdate();
+		
+		tmpDescriptionFile = Conversion.stringToTempFile(
+				xstream.toXML(oet.getRun()), "weka_generated_run");
+		ApiConnector.openmlRunUpload(tmpDescriptionFile, new HashMap<String, File>(), ash.getSessionHash());
+	}
+
+	private void ashUpdate() throws Exception {
+		if (ash == null)
+			throw new Exception("No credentials provided yet. ");
+		if (ash.isValid() == false)
+			ash.update();
+		if (ash.isValid() == false)
+			throw new Exception("Credentials not valid. ");
+	}
+
+	private class OpenmlExecutedTask {
 
 		private Instances predictions;
 		private int nrOfResultBatches;
 		private final int nrOfExpectedResultBatches;
 		private String[] classnames;
-		private String implementation;
 		private Run run;
 
-		public OpenmlExecutedTask(Task t, String implementation, String options) throws Exception {
+		public OpenmlExecutedTask(Task t, String implementation,
+				String error_message, String options) throws Exception {
 			classnames = TaskInformation.getClassNames(t);
 			nrOfExpectedResultBatches = TaskInformation.getNumberOfFolds(t)
 					* TaskInformation.getNumberOfRepeats(t);
@@ -145,8 +167,8 @@ public class TaskResultListener extends InstancesResultListener {
 			predictions = new Instances("openml_task_" + t.getTask_id()
 					+ "_predictions", attInfo, 0);
 			
-			run = new Run(t.getTask_id(), implementation, options);
-			this.implementation = implementation;
+			run = new Run(t.getTask_id(), implementation, error_message,
+					options);
 		}
 
 		public void addBatch(int fold, int repeat, Integer[] rowids,
@@ -157,27 +179,28 @@ public class TaskResultListener extends InstancesResultListener {
 				double[] values = new double[predictions.numAttributes()];
 				values[predictions.attribute("row_id").index()] = rowids[i];
 				values[predictions.attribute("fold").index()] = fold;
-				values[predictions.attribute("repeat").index()] = repeat - 1; // 1-based => 0-based
-				values[predictions.attribute("prediction").index()] = current.predicted();
-				if(current instanceof NominalPrediction) {
-					double[] confidences = ((NominalPrediction) current).distribution();
-					for(int j = 0; j < confidences.length; ++j) {
-						values[predictions.attribute("confidence."+classnames[j]).index()] = confidences[j];
+				values[predictions.attribute("repeat").index()] = repeat - 1; // 1-based
+																				// =>
+																				// 0-based
+				values[predictions.attribute("prediction").index()] = current
+						.predicted();
+				if (current instanceof NominalPrediction) {
+					double[] confidences = ((NominalPrediction) current)
+							.distribution();
+					for (int j = 0; j < confidences.length; ++j) {
+						values[predictions.attribute(
+								"confidence." + classnames[j]).index()] = confidences[j];
 					}
 				}
-				
+
 				predictions.add(new Instance(1.0D, values));
 			}
 		}
-		
-		public String getImplementation() {
-			return implementation;
-		}
-		
+
 		public Run getRun() {
 			return run;
 		}
-		
+
 		public Instances getPredictions() {
 			return predictions;
 		}
