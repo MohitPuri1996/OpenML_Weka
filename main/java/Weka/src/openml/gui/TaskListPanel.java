@@ -273,7 +273,7 @@ public class TaskListPanel extends DatasetListPanel {
 
 	public void actionPerformedTaskBasedAdd(ActionEvent e) {
 		String s = (String) JOptionPane.showInputDialog(this,
-				"A comma-seperated list of the task id's from OpenML.org:",
+				"A comma-separated list of the task id's from OpenML.org:",
 				"OpenML Task id's", JOptionPane.PLAIN_MESSAGE);
 		try {
 			int[] input_task_ids = Conversion.commaSeperatedStringToIntArray(s);

@@ -3,8 +3,8 @@ package openml.xml;
 import java.io.IOException;
 import java.io.Serializable;
 
+import openml.algorithms.TaskInformation;
 import openml.constants.Constants;
-import openml.constants.Settings;
 import openml.io.ApiConnector;
 import weka.core.Instances;
 
@@ -25,7 +25,11 @@ public class Task implements Serializable {
 	
 	@Override
 	public String toString() {
-		return Settings.BASE_URL + "api/?f=openml.tasks.search&task_id=" + getTask_id();
+		String source_data = "Unknown dataset";
+		try {
+			source_data = TaskInformation.getSourceData(this).getDataSetDescription().getName();
+		} catch (Exception e) {}
+		return "Task " + getTask_id() + ": " + source_data + " - " + getTask_type();
 	}
 	
 	@Override
